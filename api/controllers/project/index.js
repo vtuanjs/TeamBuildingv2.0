@@ -143,16 +143,14 @@ module.exports.updateProject = async (req, res, next) => {
     }
 }
 
-module.exports.getProjects = async (req, res, next) => {
-    const { filter } = req.query
-    const signedUser = req.user
-    let condition = {
-        members: { $in: [signedUser._id] }
+const queryGetProjects = (byUser, filter) => {
+    let query = {
+        members: { $in: [byUser._id] }
     }
 
     if (!filter) {
-        condition = {
-            ...condition,
+        query = {
+            ...query,
             isStored: 0,
             isDeleted: 0
         }
@@ -161,14 +159,14 @@ module.exports.getProjects = async (req, res, next) => {
     if (filter) {
         switch (filter) {
             case 'isStored':
-                condition = {
-                    ...condition,
+                query = {
+                    ...query,
                     isStored: 1
                 }
                 break
             case 'isDeleted':
-                condition = {
-                    ...condition,
+                query = {
+                    ...query,
                     isDeleted: 1
                 }
                 break
@@ -176,9 +174,16 @@ module.exports.getProjects = async (req, res, next) => {
         }
     }
 
+    return query
+}
+
+module.exports.getProjects = async (req, res, next) => {
+    const { filter } = req.query
+    const signedUser = req.user
+
     try {
         const projects = await Project.find(
-            condition,
+            queryGetProjects(signedUser, filter),
             "title createdAt"
         )
 
@@ -220,13 +225,39 @@ const convertUserIdsFromStringToArray = (userIds) => {
     }
 }
 
-const createNotifyJoinProjectToUsers = (message, secretKey, userIds, session) => {
+const setMembersInProject = (projectId, userIds, session) => {
+    return Project.findOneAndUpdate(
+        { _id: projectId },
+        { $addToSet: { members: { $each: userIds } } },
+        { new: true }
+    ).select('members').session(session)
+}
+
+const pushProjectToUsers = (projectId, userIds, session) => {
+    return User.updateMany(
+        {
+            _id: { $in: userIds },
+            "projects._id": { $ne: projectId }
+        },
+        {
+            $push: {
+                projects: {
+                    _id: projectId,
+                    role: "user",
+                    isJoined: 0
+                }
+            }
+        }
+    ).session(session)
+}
+
+const createNotifyJoinProjectToUsers = (message, projectId, userIds, session) => {
     let arrayNotifyCreate = []
     for (let index = 0; index < userIds.length; index++) {
         arrayNotifyCreate.push({
             title: INVITE_JOIN_PROJECT,
             message: message,
-            secretKey,
+            secretKey: { projectId },
             user: userIds[index]
         })
     }
@@ -257,28 +288,8 @@ module.exports.addMembers = async (req, res, next) => {
             if (verifyUsers.length === 0) throw "Can not find any user"
 
             const [projectWillAddMembers, _user, _notify] = await Promise.all([
-                Project.findOneAndUpdate(
-                    { _id: projectId },
-                    { $addToSet: { members: { $each: verifyUserIds } } },
-                    { new: true }
-                ).select('members').session(session),
-
-                User.updateMany(
-                    {
-                        _id: { $in: verifyUserIds },
-                        "projects._id": { $ne: projectId }
-                    },
-                    {
-                        $push: {
-                            projects: {
-                                _id: projectId,
-                                role: "user",
-                                isJoined: 0
-                            }
-                        }
-                    }
-                ).session(session),
-
+                setMembersInProject(projectId, verifyUserIds, session),
+                pushProjectToUsers(projectId, verifyUserIds, session),
                 createNotifyJoinProjectToUsers(
                     `${signedUser.name} invite you join project ${findProjectInUser._id.title}`,
                     projectId,
@@ -295,7 +306,7 @@ module.exports.addMembers = async (req, res, next) => {
                 && findProjectInUser._id.role === 'user')
                 throw 'Member can not add member'
 
-            return res.json({
+            res.json({
                 message: `Add member successfully!`, project: projectWillAddMembers
             })
         })
@@ -305,7 +316,7 @@ module.exports.addMembers = async (req, res, next) => {
 }
 
 module.exports.agreeJoinProject = async (req, res, next) => {
-    const { projectId } = req.query
+    const { projectId } = req.params
     const signedUser = req.user
     try {
         await Promise.all([
@@ -315,8 +326,8 @@ module.exports.agreeJoinProject = async (req, res, next) => {
             ),
 
             Notify.updateOne(
-                { user: signedUser._id, title: INVITE_JOIN_PROJECT, secretKey: projectId },
-                { $unset: { secretKey: projectId }, isAction: 1 }
+                { user: signedUser._id, title: INVITE_JOIN_PROJECT, 'secretKey.projectId': projectId },
+                { $unset: { secretKey: { projectId } }, isAction: 1 }
             )
         ])
 
@@ -327,19 +338,19 @@ module.exports.agreeJoinProject = async (req, res, next) => {
 }
 
 module.exports.disAgreeJoinProject = async (req, res, next) => {
-    const { projectId } = req.query
+    const { projectId } = req.params
     const signedUser = req.user
     try {
-        await Promise.all([
+        const [rawUser, rawProject, rawNotify] = await Promise.all([
             User.updateOne(
                 { _id: signedUser._id, 'projects._id': projectId },
                 {
-                    $pull: { projects: { 'projects._id': projectId } }
+                    $pull: { projects: { _id: projectId } }
                 }
             ),
 
-            Project.findByIdAndUpdate(
-                projectId,
+            Project.updateOne(
+                { _id: projectId },
                 { $pull: { members: signedUser._id } }
             ),
 
@@ -347,14 +358,18 @@ module.exports.disAgreeJoinProject = async (req, res, next) => {
                 {
                     user: signedUser._id,
                     title: INVITE_JOIN_PROJECT,
-                    secretKey: projectId
+                    'secretKey.projectId': projectId
                 },
                 {
-                    $unset: { secretKey: projectId },
+                    $unset: { secretKey: { projectId } },
                     isAction: 1
                 }
             )
         ])
+
+        if (rawUser.ok != 1 || rawProject.ok != 1 || rawNotify.ok != 1) {
+            throw 'Can not do this action'
+        }
 
         res.json({ message: 'Disagree join project successfully!' })
     } catch (error) {
@@ -384,7 +399,7 @@ module.exports.removeMembers = async (req, res, next) => {
 
                 User.updateMany(
                     { _id: { $in: arrayUserIds } },
-                    { $unset: { "projects._id": projectId } }
+                    { $unset: { projects: { _id: projectId } } }
                 ).session(session)
             ])
 
@@ -408,16 +423,20 @@ module.exports.changeUserRole = async (req, res, next) => {
             const [project, user] = await Promise.all([
                 Project.findById(projectId),
                 User.findOneAndUpdate(
-                    { _id: userId, "projects._id": projectId },
-                    { $set: { "projects.$.role": role } },
-                    { new: true }
+                    { _id: userId },
+                    { $set: { "projects.$[element].role": role } },
+                    { 
+                        arrayFilters: [{'element._id': projectId}],
+                        new: true 
+                    }
                 ).session(session)
             ])
 
             if (!user || !project) throw "Can not find user/project or user not a member in project"
 
             res.json({
-                message: `${user.title} is now ${role}!`, user: { _id: user._id, projects: user.projects }
+                // project, user
+                message: `${user.name} is now ${role}!`, user: { _id: user._id, projects: user.projects }
             })
         })
     } catch (error) {

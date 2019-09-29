@@ -14,17 +14,19 @@ const ProjectSchema = new Schema({
     }
 }, { timestamps: true, autoCreate: true })
 
-ProjectSchema.pre('findByIdAndDelete', function (next) {
-    const project = this
-    project.model('User').updateMany(
-        { "projects.id": project._id },
+ProjectSchema.pre('deleteOne', function (next) {
+    let _id = this.getQuery()["_id"];
+    mongoose.model("User").updateMany(
+        { 'projects._id': _id },
         {
-            $pull: {
-                projects: { id: project._id }
+            $pull: { projects: { _id: _id } }
+        }, function (err, result) {
+            if (err) {
+                next(err);
+            } else {
+                next();
             }
-        },
-        next
-    )
+        });
 });
 
 const Project = mongoose.model("Project", ProjectSchema)
