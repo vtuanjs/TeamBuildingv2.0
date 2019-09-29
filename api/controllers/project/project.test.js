@@ -167,7 +167,6 @@ describe('POST /project/:projectId/add-members', () => {
             .send({ userIds })
             .then(res => {
                 const body = res.body
-                console.log(body)
                 expect(res.statusCode).to.equals(200)
                 expect(body).to.contains.property('project')
                 expect(body.project).to.contains.property('members')

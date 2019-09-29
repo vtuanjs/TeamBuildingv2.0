@@ -23,7 +23,7 @@ module.exports.postProject = async (req, res, next) => {
         )
 
         signedUser.projects.push({
-            id: project._id,
+            _id: project._id,
             role: "owner"
         })
         await signedUser.save()
@@ -204,8 +204,10 @@ module.exports.getProject = async (req, res, next) => {
     }
 }
 
-const findProjectPropertyInUser = (user, projectId) => {
-    return user.projects.find(project => project.id.equals(projectId))
+const findUserWithPopulateProject = (userId) => {
+    return User
+        .findById(userId)
+        .populate('projects._id', 'title')
 }
 
 const convertUserIdsFromStringToArray = (userIds) => {
@@ -239,31 +241,22 @@ module.exports.addMembers = async (req, res, next) => {
     const session = await mongoose.startSession()
     try {
         await session.withTransaction(async () => {
-            const projectInUser = await findProjectPropertyInUser(signedUser, projectId)
-            let populateUser = await User.findById(signedUser._id)
-            // .populate({
-            //     path: 'threads',
-            //     populate: {
-            //         path: 'messages', 
-            //         model: 'Message',
-            //         populate: {
-            //             path: 'user',
-            //             model: 'User'
-            //         }
-            //     }
-            // })
-            let test = populateUser.projects
+            const arrayUserIds = convertUserIdsFromStringToArray(userIds)
 
-            if (!projectInUser) throw 'User is not in project'
+            const [populateUser, verifyUsers] = await Promise.all([
+                findUserWithPopulateProject(signedUser._id),
+                User.find({ _id: { $in: arrayUserIds } })
+            ])
 
-            let arrayUserIds = convertUserIdsFromStringToArray(userIds)
-            let verifyUsers = await User.find({ _id: { $in: arrayUserIds } })
-            if (verifyUsers.length === 0)
-                throw "Can not find any user"
-
+            const findProjectInUser = populateUser.projects.find(
+                project => project._id.equals(projectId)
+            )
             const verifyUserIds = verifyUsers.map(user => user._id)
 
-            const [project, _user, notify] = await Promise.all([
+            if (!findProjectInUser) throw 'User is not in project'
+            if (verifyUsers.length === 0) throw "Can not find any user"
+
+            const [projectWillAddMembers, _user, _notify] = await Promise.all([
                 Project.findOneAndUpdate(
                     { _id: projectId },
                     { $addToSet: { members: { $each: verifyUserIds } } },
@@ -273,12 +266,12 @@ module.exports.addMembers = async (req, res, next) => {
                 User.updateMany(
                     {
                         _id: { $in: verifyUserIds },
-                        "projects.id": { $ne: projectId }
+                        "projects._id": { $ne: projectId }
                     },
                     {
                         $push: {
                             projects: {
-                                id: projectId,
+                                _id: projectId,
                                 role: "user",
                                 isJoined: 0
                             }
@@ -287,22 +280,23 @@ module.exports.addMembers = async (req, res, next) => {
                 ).session(session),
 
                 createNotifyJoinProjectToUsers(
-                    `${signedUser.name} invite you join project ${projectInUser.title}`,
+                    `${signedUser.name} invite you join project ${findProjectInUser._id.title}`,
                     projectId,
                     arrayUserIds,
                     session
                 )
             ])
 
-            if (!project)
+            if (!projectWillAddMembers)
                 throw "Can not find project"
 
             // Check permistion
-            if (!project.allowed.isAllowMemberAddMember && projectInUser.role === 'user')
+            if (!projectWillAddMembers.allowed.isAllowMemberAddMember
+                && findProjectInUser._id.role === 'user')
                 throw 'Member can not add member'
 
             return res.json({
-                message: `Add member successfully!`, project, notify, projectInUser, test
+                message: `Add member successfully!`, project: projectWillAddMembers
             })
         })
     } catch (error) {
@@ -390,7 +384,7 @@ module.exports.removeMembers = async (req, res, next) => {
 
                 User.updateMany(
                     { _id: { $in: arrayUserIds } },
-                    { $unset: { "projects.id": projectId } }
+                    { $unset: { "projects._id": projectId } }
                 ).session(session)
             ])
 
@@ -414,7 +408,7 @@ module.exports.changeUserRole = async (req, res, next) => {
             const [project, user] = await Promise.all([
                 Project.findById(projectId),
                 User.findOneAndUpdate(
-                    { _id: userId, "projects.id": projectId },
+                    { _id: userId, "projects._id": projectId },
                     { $set: { "projects.$.role": role } },
                     { new: true }
                 ).session(session)

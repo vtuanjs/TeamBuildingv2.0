@@ -14,29 +14,20 @@ const UserSchema = new Schema({
     score: { type: Number, default: 0 },
     isActive: { type: Number, default: 1 },
     isBanned: { type: Number, default: 0 }, //1: banned
-    notifications: [{
-        title: { type: String, required: true },
-        body: { type: String, default: " " },
-        secretKey: String,
-        isAction: { type: Number, default: 0 },
-    }],
     projects: [{
-        id: { type: ObjectId, ref: "Project" },
+        _id: { type: ObjectId, ref: "Project" },
         role: { type: String, default: "user" },
         isJoined: { type: Number, default: 1 },
-        _id: false
     }],
     jobs: [{
-        id: { type: ObjectId, ref: "Job" },
+        _id: { type: ObjectId, ref: "Job" },
         role: { type: String, default: "user" },
         isJoined: { type: Number, default: 1 },
-        _id: false
     }],
     teams: [{
-        id: { type: ObjectId, ref: "Team" },
+        _id: { type: ObjectId, ref: "Team" },
         role: { type: String, default: "user" },
         isJoined: { type: Number, default: 1 },
-        _id: false
     }],
     comments: [{ type: ObjectId, ref: "Comment" }]
 }, { timestamps: true, autoCreate: true })

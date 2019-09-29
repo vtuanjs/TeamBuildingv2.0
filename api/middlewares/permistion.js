@@ -48,7 +48,7 @@ const isInProject = (allowed, compareFrom) => {
 
         if (signedUser && signedUser.projects
             && signedUser.projects.some(project => {
-                return project.id.equals(projectId)
+                return project._id.equals(projectId)
                     && isAllowed(project.role, allowed)
             }))
             return true

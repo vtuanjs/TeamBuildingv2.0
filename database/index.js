@@ -37,11 +37,7 @@ const connect = async () => {
 }
 
 const close = async () => {
-    if (process.env.NODE_ENV === 'test') {
-        await mongoose.disconnect();
-    } else {
-        return mongoose.disconnect()
-    }
+    return mongoose.disconnect()
 }
 
 module.exports = { connect, close }
