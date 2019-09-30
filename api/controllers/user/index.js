@@ -27,11 +27,18 @@ module.exports.postUser = async (req, res, next) => {
     }
 }
 
+const isAdminExist = () => {
+    return User.findOne({ role: "admin" })
+}
+
+const encryptedPassword = (password) => {
+    return bcrypt.hash(password, 10)//saltRounds = 10
+}
+
 module.exports.postAdmin = async (req, res, next) => {
     const { name, email, password } = req.body
     try {
-        let isAdminExist = await User.findOne({ role: "admin" })
-        if (isAdminExist) {
+        if (await isAdminExist()) {
             throw "This function only use one time!"
         }
 
@@ -39,19 +46,23 @@ module.exports.postAdmin = async (req, res, next) => {
             throw "Password must be eight characters or longer, must contain at least 1 numeric character, 1 lowercase charater"
         }
 
-        const encryptedPassword = await bcrypt.hash(password, 10)//saltRounds = 10
+        const encryptedPwd = await encryptedPassword(password)
 
         const user = await User.create({
             name,
             email,
             role: "admin",
-            password: encryptedPassword
+            password: encryptedPwd
         })
 
         res.json({ message: `Create admin ${user.name} successfully!`, user })
     } catch (error) {
         next(error)
     }
+}
+
+const comparePassword = (oldPassword, password) => {
+    return bcrypt.compare(oldPassword, password)
 }
 
 module.exports.updateUser = async (req, res, next) => {
@@ -61,17 +72,15 @@ module.exports.updateUser = async (req, res, next) => {
         let user = await User.findById(userId)
 
         if (password) {
-            const pwdRegex = new RegExp('^(?=.*[a-z])(?=.*[0-9])(?=.{8,})')
-
-            if (!password.match(pwdRegex)) {
+            if (!validatePassword(password)) {
                 throw "Password must be eight characters or longer, must contain at least 1 numeric character, 1 lowercase charater"
             }
 
-            const isPasswordCorrect = await bcrypt.compare(oldPassword, user.password)
-
-            if (!isPasswordCorrect) throw "Old password wrong"
-            else {
-                password = await bcrypt.hash(password, 10)
+            const comparePwd = await comparePassword(oldPassword, user.password)
+            if (!comparePwd) {
+                throw "Old password wrong"
+            } else {
+                password = await encryptedPassword(password)
             }
         }
 
@@ -92,17 +101,28 @@ module.exports.updateUser = async (req, res, next) => {
     }
 }
 
+const getArrayUsers = (userIds) => {
+    return userIds.split(',').map(item => {
+        return item.trim()
+    })
+}
+
+const setIsBannedUsers = (userIds, status) => {
+    return User.updateMany(
+        {
+            _id: { $in: userIds },
+            role: { $ne: 'admin' }
+        },
+        { $set: { isBanned: status } },
+    )
+}
+
 module.exports.blockUsers = async (req, res, next) => {
     const { userIds } = req.params
     try {
-        const arrayUserIds = userIds.split(',').map(item => {
-            return item.trim()
-        })
+        const arrayUserIds = getArrayUsers(userIds)
 
-        const raw = await User.updateMany(
-            { _id: { $in: arrayUserIds }, role: {$ne: 'admin'} },
-            { $set: { isBanned: 1 } },
-        )
+        const raw = await setIsBannedUsers(arrayUserIds, 1)
 
         res.json({ message: "Block users successfully!", raw })
     } catch (error) {
@@ -113,14 +133,9 @@ module.exports.blockUsers = async (req, res, next) => {
 module.exports.unlockUsers = async (req, res, next) => {
     const { userIds } = req.params
     try {
-        const arrayUserIds = userIds.split(',').map(item => {
-            return item.trim()
-        })
+        const arrayUserIds = getArrayUsers(userIds)
 
-        const raw = await User.updateMany(
-            { _id: { $in: arrayUserIds } },
-            { $set: { isBanned: 0 } }
-        )
+        const raw = await setIsBannedUsers(arrayUserIds, 0)
 
         res.json({ message: "Unlock users successfully!", raw })
     } catch (error) {
@@ -131,7 +146,7 @@ module.exports.unlockUsers = async (req, res, next) => {
 module.exports.deleteUser = async (req, res, next) => {
     const { userId } = req.params
     try {
-        const raw = await User.deleteOne({ _id: userId, role: {$ne: 'admin'} })
+        const raw = await User.deleteOne({ _id: userId, role: { $ne: 'admin' } })
 
         res.json({ message: "Delete user successfully!", raw })
     } catch (error) {
@@ -142,8 +157,10 @@ module.exports.deleteUser = async (req, res, next) => {
 module.exports.getByEmail = async (req, res, next) => {
     const { email } = req.params
     try {
+        const emailFormated = email.trim().toLowerCase()
+
         const foundUser = await User
-            .findOne({ email: email.trim().toLowerCase() })
+            .findOne({ email: emailFormated })
             .select("name email")
 
         if (!foundUser) throw "Nothing"
@@ -156,7 +173,6 @@ module.exports.getByEmail = async (req, res, next) => {
 
 module.exports.getUser = async (req, res, next) => {
     const userId = req.params.userId
-
     try {
         const foundUser = await User.findById(userId)
             .select("-password -isActive -isBanned")

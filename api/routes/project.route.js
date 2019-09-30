@@ -72,7 +72,7 @@ router.get('/:projectId',
 
 router.post('/:projectId/add-members',
     authentication.required,
-    // Advance check permit in controller
+    // check permit in controller
     project.addMembers
 )
 
