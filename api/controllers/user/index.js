@@ -13,6 +13,7 @@ module.exports.postUser = async (req, res, next) => {
         if (!validatePassword(password)) {
             throw "Password must be eight characters or longer, must contain at least 1 numeric character, 1 lowercase charater"
         }
+
         const encryptedPassword = await bcrypt.hash(password, 10)//saltRounds = 10
 
         const user = await User.create({
@@ -21,7 +22,7 @@ module.exports.postUser = async (req, res, next) => {
             password: encryptedPassword
         })
 
-        res.json({ message: `Create user ${user.name} successfully!`, user })
+        return res.json({ message: `Create user ${user.name} successfully!`, user })
     } catch (error) {
         if (error.code === 11000) error = "Email already exists"
         next(error)
@@ -42,7 +43,6 @@ module.exports.postAdmin = async (req, res, next) => {
         if (await isAdminExist()) {
             throw "This function only use one time!"
         }
-
         if (!validatePassword(password)) {
             throw "Password must be eight characters or longer, must contain at least 1 numeric character, 1 lowercase charater"
         }
@@ -56,7 +56,7 @@ module.exports.postAdmin = async (req, res, next) => {
             password: encryptedPwd
         })
 
-        res.json({ message: `Create admin ${user.name} successfully!`, user })
+        return res.json({ message: `Create admin ${user.name} successfully!`, user })
     } catch (error) {
         next(error)
     }
@@ -96,7 +96,7 @@ module.exports.updateUser = async (req, res, next) => {
         Object.assign(user, query)
         await user.save()
 
-        res.json({ message: `Update user with ID: ${user._id} succesfully!`, user })
+        return res.json({ message: `Update user with ID: ${user._id} succesfully!`, user })
     } catch (error) {
         next("Update error: " + error)
     }
@@ -125,7 +125,7 @@ module.exports.blockUsers = async (req, res, next) => {
 
         const raw = await setIsBannedUsers(arrayUserIds, 1)
 
-        res.json({ message: "Block users successfully!", raw })
+        return res.json({ message: "Block users successfully!", raw })
     } catch (error) {
         next(error)
     }
@@ -138,7 +138,7 @@ module.exports.unlockUsers = async (req, res, next) => {
 
         const raw = await setIsBannedUsers(arrayUserIds, 0)
 
-        res.json({ message: "Unlock users successfully!", raw })
+        return res.json({ message: "Unlock users successfully!", raw })
     } catch (error) {
         next(error)
     }
@@ -149,7 +149,7 @@ module.exports.deleteUser = async (req, res, next) => {
     try {
         const raw = await User.deleteOne({ _id: userId, role: { $ne: 'admin' } })
 
-        res.json({ message: "Delete user successfully!", raw })
+        return res.json({ message: "Delete user successfully!", raw })
     } catch (error) {
         next(error)
     }
@@ -164,9 +164,9 @@ module.exports.getByEmail = async (req, res, next) => {
             .findOne({ email: emailFormated })
             .select("name email")
 
-        if (!foundUser) throw "Nothing"
+        if (!foundUser) throw "Can not find user with email"
 
-        res.json({ user: foundUser })
+        return res.json({ user: foundUser })
     } catch (error) {
         next(error)
     }
@@ -194,7 +194,7 @@ module.exports.getUser = async (req, res, next) => {
 
         if (!foundUser) throw "User is not exist"
 
-        res.json({ user: foundUser })
+        return res.json({ user: foundUser })
     } catch (error) {
         next(error)
     }
@@ -206,7 +206,7 @@ module.exports.getUsers = async (_req, res, next) => {
 
         if (!foundUsers) throw "Can not show list of users"
 
-        res.json({ users: foundUsers })
+        return res.json({ users: foundUsers })
     } catch (error) {
         next(error)
     }

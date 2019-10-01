@@ -35,7 +35,7 @@ module.exports.postProject = async (req, res, next) => {
 
         await pushProjectToUser(project._id, signedUser)
 
-        res.json({ message: `Create project successfully!`, project })
+        return res.json({ message: `Create project successfully!`, project })
     } catch (error) {
         next(error)
     }
@@ -59,7 +59,7 @@ module.exports.deleteProject = async (req, res, next) => {
 
         if (!project) throw "Can not find project"
 
-        res.json({ message: `Send project ${project.title} to trash successfully!`, project })
+        return res.json({ message: `Send project ${project.title} to trash successfully!`, project })
     } catch (error) {
         next(error)
     }
@@ -72,7 +72,7 @@ module.exports.undoDeleteProject = async (req, res, next) => {
 
         if (!project) throw "Can not find project"
 
-        res.json({ message: `Restore project ${project.title} successfully!`, project })
+        return res.json({ message: `Restore project ${project.title} successfully!`, project })
     } catch (error) {
         next(error)
     }
@@ -84,7 +84,7 @@ module.exports.deleteImmediately = async (req, res, next) => {
     try {
         const raw = await Project.deleteOne({ _id: projectId })
 
-        res.json({ message: "Delete project successfully!", raw })
+        return res.json({ message: "Delete project successfully!", raw })
     } catch (error) {
         next(error)
     }
@@ -104,7 +104,7 @@ module.exports.storedProject = async (req, res, next) => {
 
         if (!project) throw "Can not find project"
 
-        res.json({ message: `Stored project ${project.title} successfully!`, project })
+        return res.json({ message: `Stored project ${project.title} successfully!`, project })
     } catch (error) {
         next(error)
     }
@@ -117,7 +117,7 @@ module.exports.undoStoredProject = async (req, res, next) => {
 
         if (!project) throw "Can not find project"
 
-        res.json({ message: `Undo Stored project successfully!`, project })
+        return res.json({ message: `Undo Stored project successfully!`, project })
     } catch (error) {
         next(error)
     }
@@ -126,7 +126,6 @@ module.exports.undoStoredProject = async (req, res, next) => {
 module.exports.updateProject = async (req, res, next) => {
     const { projectId } = req.params
     const { title, description } = req.body
-
     try {
         const project = await Project.findByIdAndUpdate(
             projectId,
@@ -139,7 +138,7 @@ module.exports.updateProject = async (req, res, next) => {
 
         if (!project) throw "Can not find project"
 
-        res.json({ message: `Update project successfully!`, project })
+        return res.json({ message: `Update project successfully!`, project })
     } catch (error) {
         next(error)
     }
@@ -157,7 +156,6 @@ const queryGetProjects = (byUser, filter) => {
             isDeleted: 0
         }
     }
-
     if (filter) {
         switch (filter) {
             case 'isStored':
@@ -191,7 +189,7 @@ module.exports.getProjects = async (req, res, next) => {
 
         if (!projects) throw "Can not show project"
 
-        res.json({ projects })
+        return res.json({ projects })
     } catch (error) {
         next(error)
     }
@@ -205,7 +203,7 @@ module.exports.getProject = async (req, res, next) => {
 
         if (!project) throw "Wrong project id"
 
-        res.json({ project })
+        return res.json({ project })
     } catch (error) {
         next(error)
     }
@@ -259,26 +257,22 @@ const addMembersToProject = ({ projectId, userIds, session }) => {
         (_error, doc) => {
             if (!doc) throw "Can not find project"
         }
-    )
-        .select('members').session(session)
+    ).select('members').session(session)
 }
 
 const pushProjectToUsers = ({ projectId, userIds, session }) => {
-    return User.updateMany(
-        {
-            _id: { $in: userIds },
-            "projects._id": { $ne: projectId }
-        },
-        {
-            $push: {
-                projects: {
-                    _id: projectId,
-                    role: "user",
-                    isJoined: 0
-                }
+    return User.updateMany({
+        _id: { $in: userIds },
+        "projects._id": { $ne: projectId }
+    }, {
+        $push: {
+            projects: {
+                _id: projectId,
+                role: "user",
+                isJoined: 0
             }
         }
-    ).session(session)
+    }).session(session)
 }
 
 const createNotifyJoinProject = ({ message, projectId, userIds, session }) => {
@@ -328,10 +322,11 @@ module.exports.addMembers = async (req, res, next) => {
                 })
             ])
 
-            if (!isAllowed(projectWillAddMembers, projectInUser.role))
+            if (!isAllowed(projectWillAddMembers, projectInUser.role)) {
                 throw 'Member can not add member'
+            }
 
-            res.json({
+            return res.json({
                 message: `Add member successfully!`, project: projectWillAddMembers
             })
         })
@@ -356,7 +351,7 @@ module.exports.agreeJoinProject = async (req, res, next) => {
             )
         ])
 
-        res.json({ message: 'Join project successfully!' })
+        return res.json({ message: 'Join project successfully!' })
     } catch (error) {
         next(error)
     }
@@ -390,7 +385,7 @@ module.exports.disAgreeJoinProject = async (req, res, next) => {
             )
         ])
 
-        res.json({ message: 'Disagree join project successfully!' })
+        return res.json({ message: 'Disagree join project successfully!' })
     } catch (error) {
         next(error)
     }
@@ -405,7 +400,7 @@ module.exports.removeMembers = async (req, res, next) => {
     try {
         await session.withTransaction(async () => {
 
-            let arrayUserIds = splitUserIds(userIds)
+            const arrayUserIds = splitUserIds(userIds)
 
             const [project,] = await Promise.all([
                 Project.findByIdAndUpdate(
@@ -453,7 +448,7 @@ module.exports.changeUserRole = async (req, res, next) => {
 
             if (!user || !project) throw "Can not find user/project or user not a member in project"
 
-            res.json({
+            return res.json({
                 message: `${user.name} is now ${role}!`, user: { _id: user._id, projects: user.projects }
             })
         })

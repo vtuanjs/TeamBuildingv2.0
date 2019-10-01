@@ -8,6 +8,7 @@ module.exports.required = async (req, res, next) => {
         if (Date.now() / 1000 > decodedJson.exp) {
             throw "Token expire, please login again"
         }
+
         const user = await User.findById(decodedJson.id)
         if (!user) {
             throw "Can not find user with this token"
@@ -15,6 +16,7 @@ module.exports.required = async (req, res, next) => {
         if (user.isBanned === 1) {
             throw "User is blocked"
         }
+        
         req.user = user
         return next()
     } catch (error) {

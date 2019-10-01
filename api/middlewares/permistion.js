@@ -3,30 +3,25 @@ const isAllowed = (roleCheck, rolesAllowed) => {
 }
 
 const shouldIsSelfUser = (userIdSelf, userIdCompare, allowed) => {
-    return (isAllowed('self', allowed) && userIdCompare
-        && userIdSelf.equals(userIdCompare))
+    return isAllowed('self', allowed) && userIdCompare
+        && userIdSelf.equals(userIdCompare)
 }
 
 const isInUser = (allowed) => {
     if (allowed.indexOf("user") > -1 || allowed.indexOf("self") > -1) {
         allowed += ' admin'
     }
-
+    
     return (req) => {
-        if (shouldIsSelfUser(req.user._id, req.params.userId, allowed)) {
+        if (shouldIsSelfUser(req.user._id, req.params.userId, allowed) || isAllowed(req.user.role, allowed)) {
             return true
         }
-
-        if (isAllowed(req.user.role, allowed))
-            return true
-
         return false
     }
 }
 
 const findProjectIdFromSource = (req, source) => {
     let projectId
-
     switch (source) {
         case "body":
             projectId = req.body.projectId
@@ -40,23 +35,22 @@ const findProjectIdFromSource = (req, source) => {
         default:
             return false
     }
-
+    
     return projectId
 }
 
 const shouldIsAllowedInProject = ({ user, projectId, allowed }) => {
-    return (user && user.projects
+    return user && user.projects
         && user.projects.some(project => {
             return project._id.equals(projectId)
                 && isAllowed(project.role, allowed)
-        }))
+        })
 }
 
 const isInProject = (allowed, source) => {
     if (allowed.indexOf("admin") > -1) {
         allowed += ' owner'
     }
-
     if (allowed.indexOf("user") > -1) {
         allowed += ' admin owner'
     }
