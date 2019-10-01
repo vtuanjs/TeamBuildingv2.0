@@ -1,3 +1,4 @@
+'use strict'
 const expect = require('chai').expect
 const request = require('supertest')
 
@@ -17,7 +18,11 @@ describe('POST /user', () => {
 
     it('OK, create new user with email dung.van@gmail.com', done => {
         request(app).post('/user')
-            .send({ name: 'Nguyen Van Dung', email: 'dung.van@gmail.com', password: '12345678a' })
+            .send({
+                name: 'Nguyen Van Dung',
+                email: 'dung.van@gmail.com',
+                password: '12345678a'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -31,7 +36,11 @@ describe('POST /user', () => {
 
     it('OK, create new user with email kien.tran@hot.com', done => {
         request(app).post('/user')
-            .send({ name: 'Luck', email: 'luck@hot.com', password: '12345678b' })
+            .send({
+                name: 'Luck',
+                email: 'luck@hot.com',
+                password: '12345678b'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -45,7 +54,11 @@ describe('POST /user', () => {
 
     it('OK, create new user with email smith@exo.com', done => {
         request(app).post('/user')
-            .send({ name: 'Smith', email: 'smith@exo.com', password: '12345678c' })
+            .send({
+                name: 'Smith',
+                email: 'smith@exo.com',
+                password: '12345678c'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -59,7 +72,11 @@ describe('POST /user', () => {
 
     it('OK, create new user with email tuan.nv@amavi.asia', done => {
         request(app).post('/user')
-            .send({ name: 'Nguyen Van Tuan', email: 'tuan.nv@amavi.asia', password: '12345678c' })
+            .send({
+                name: 'Nguyen Van Tuan',
+                email: 'tuan.nv@amavi.asia',
+                password: '12345678c'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -73,7 +90,11 @@ describe('POST /user', () => {
 
     it('OK, create new user with email kien.nguyen@amavi.asia', done => {
         request(app).post('/user')
-            .send({ name: 'Nguyen Kien', email: 'kien.nguyen@amavi.asia', password: '12345678c' })
+            .send({
+                name: 'Nguyen Kien',
+                email: 'kien.nguyen@amavi.asia',
+                password: '12345678c'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -87,7 +108,11 @@ describe('POST /user', () => {
 
     it('OK, create new user with email phu.tran@amavi.asia', done => {
         request(app).post('/user')
-            .send({ name: 'Tran Phu', email: 'phu.tran@amavi.asia', password: '12345678c' })
+            .send({
+                name: 'Tran Phu',
+                email: 'phu.tran@amavi.asia',
+                password: '12345678c'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -101,7 +126,11 @@ describe('POST /user', () => {
 
     it('OK, create new user with email giang.nguyen@amavi.asia', done => {
         request(app).post('/user')
-            .send({ name: 'Nguyen Giang', email: 'giang.nguyen@amavi.asia', password: '12345678c' })
+            .send({
+                name: 'Nguyen Giang',
+                email: 'giang.nguyen@amavi.asia',
+                password: '12345678c'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -115,7 +144,11 @@ describe('POST /user', () => {
 
     it('OK, create new user with email mai.huong@amavi.asia', done => {
         request(app).post('/user')
-            .send({ name: 'Huong Mai', email: 'mai.huong@amavi.asia', password: '12345678c' })
+            .send({
+                name: 'Huong Mai',
+                email: 'mai.huong@amavi.asia',
+                password: '12345678c'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -129,7 +162,11 @@ describe('POST /user', () => {
 
     it('OK, create new user with email ngocancsdl@gmail.com', done => {
         request(app).post('/user')
-            .send({ name: 'Lê Thị Ngọc An', email: 'ngocancsdl@gmail.com', password: '12345678d' })
+            .send({
+                name: 'Lê Thị Ngọc An',
+                email: 'ngocancsdl@gmail.com',
+                password: '12345678d'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -143,7 +180,11 @@ describe('POST /user', () => {
 
     it('Fail, Password must be eight characters or longer, must contain at least 1 numeric character, 1 lowercase charater', done => {
         request(app).post('/user')
-            .send({ name: 'PWS Join', email: 'pwdjoin@gmail.com', password: '1234567' })
+            .send({
+                name: 'PWS Join',
+                email: 'pwdjoin@gmail.com',
+                password: '1234567'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(400)
@@ -155,7 +196,11 @@ describe('POST /user', () => {
 
     it('Fail, duplicate email', done => {
         request(app).post('/user')
-            .send({ name: 'Nguyen Van Dung', email: 'dung.van@gmail.com', password: '12345678e' })
+            .send({
+                name: 'Nguyen Van Dung',
+                email: 'dung.van@gmail.com',
+                password: '12345678e'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(400)
@@ -168,7 +213,11 @@ describe('POST /user', () => {
 
     it('Fail, wrong email format', done => {
         request(app).post('/user')
-            .send({ name: 'Taylor Swift', email: 'taylorgmail.com', password: '12345678f' })
+            .send({
+                name: 'Taylor Swift',
+                email: 'taylorgmail.com',
+                password: '12345678f'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(400)
@@ -181,7 +230,10 @@ describe('POST /user', () => {
 
     it('Fail, missing email', done => {
         request(app).post('/user')
-            .send({ name: 'Taylor Swift', password: '12345678g' })
+            .send({
+                name: 'Taylor Swift',
+                password: '12345678g'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(400)
@@ -194,7 +246,10 @@ describe('POST /user', () => {
 
     it('Fail, missing password', done => {
         request(app).post('/user')
-            .send({ name: 'Taylor Swift', email: 'taylorgmail.com' })
+            .send({
+                name: 'Taylor Swift',
+                email: 'taylorgmail.com'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(400)
@@ -223,7 +278,7 @@ describe('GET /user', () => {
 
 describe('GET /user/get-by-email/:email', () => {
     it('OK, find user by email', done => {
-        request(app).get('/user/get-by-email/' + "smith@exo.com")
+        request(app).get('/user/get-by-email/smith@exo.com')
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -236,7 +291,7 @@ describe('GET /user/get-by-email/:email', () => {
 
 describe('GET /user/:userId', () => {
     it('OK, get detail user', done => {
-        request(app).get('/user/' + listUsers[0]._id)
+        request(app).get(`/user/${listUsers[0]._id}`)
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -252,7 +307,11 @@ describe('GET /user/:userId', () => {
 describe('POST /user/admin', () => {
     it('OK, create admin with email vantuan130393@gmail.com', done => {
         request(app).post('/user/admin')
-            .send({ name: 'Nguyễn Văn Tuấn', email: 'vantuan130393@gmail.com', password: '12345678a' })
+            .send({
+                name: 'Nguyễn Văn Tuấn',
+                email: 'vantuan130393@gmail.com',
+                password: '12345678a'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -266,7 +325,11 @@ describe('POST /user/admin', () => {
 
     it('Fail, only create admin once time', done => {
         request(app).post('/user/admin')
-            .send({ name: 'Admin 2', email: 'admin2@gmail.com', password: '12345678a' })
+            .send({
+                name: 'Admin 2',
+                email: 'admin2@gmail.com',
+                password: '12345678a'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(400)
@@ -281,7 +344,10 @@ describe('POST /user/admin', () => {
 describe('POST /auth/login', () => {
     it('Ok, login admin account', done => {
         request(app).post(`/auth/login`)
-            .send({ email: 'vantuan130393@gmail.com', password: '12345678a' })
+            .send({
+                email: 'vantuan130393@gmail.com',
+                password: '12345678a'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -296,7 +362,10 @@ describe('POST /auth/login', () => {
 
     it('Ok, login user account', done => {
         request(app).post(`/auth/login`)
-            .send({ email: 'tuan.nv@amavi.asia', password: '12345678c' })
+            .send({
+                email: 'tuan.nv@amavi.asia',
+                password: '12345678c'
+            })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)

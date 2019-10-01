@@ -1,3 +1,4 @@
+'use strict'
 const expect = require('chai').expect
 const request = require('supertest')
 const app = require('../../../app')
@@ -11,7 +12,9 @@ let userId
 describe('POST /project', () => {
     before(done => {
         request(app).post(`/auth/login`)
-            .send({ email: 'tuan.nv@amavi.asia', password: '12345678c' })
+            .send({ 
+                email: 'tuan.nv@amavi.asia', 
+                password: '12345678c' })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -26,7 +29,9 @@ describe('POST /project', () => {
     it('OK, create Project 1', done => {
         request(app).post('/project')
             .set({ 'x-access-token': ownerProjectTokenKey })
-            .send({ title: 'Project 1', description: 'Project 1 Description' })
+            .send({ 
+                title: 'Project 1', 
+                description: 'Project 1 Description' })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -41,7 +46,9 @@ describe('POST /project', () => {
     it('OK, create Project 2', done => {
         request(app).post('/project')
             .set({ 'x-access-token': ownerProjectTokenKey })
-            .send({ title: 'Project 2', description: 'Project 2 Description' })
+            .send({ 
+                title: 'Project 2', 
+                description: 'Project 2 Description' })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -56,7 +63,9 @@ describe('POST /project', () => {
     it('OK, create Project 3', done => {
         request(app).post('/project')
             .set({ 'x-access-token': ownerProjectTokenKey })
-            .send({ title: 'Project 3', description: 'Project 3 Description' })
+            .send({ 
+                title: 'Project 3', 
+                description: 'Project 3 Description' })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -71,7 +80,9 @@ describe('POST /project', () => {
     it('OK, create Project 4', done => {
         request(app).post('/project')
             .set({ 'x-access-token': ownerProjectTokenKey })
-            .send({ title: 'Project 4', description: 'Project 4 Description' })
+            .send({ 
+                title: 'Project 4', 
+                description: 'Project 4 Description' })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -86,7 +97,9 @@ describe('POST /project', () => {
     it('OK, create Project 5', done => {
         request(app).post('/project')
             .set({ 'x-access-token': ownerProjectTokenKey })
-            .send({ title: 'Project 5', description: 'Project 5 Description' })
+            .send({ 
+                title: 'Project 5', 
+                description: 'Project 5 Description' })
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)

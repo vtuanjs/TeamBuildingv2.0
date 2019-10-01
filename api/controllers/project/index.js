@@ -1,3 +1,4 @@
+'use strict'
 const Project = require('./project.model')
 const User = require('../user/user.model')
 const Notify = require('../notify/notify.model')
@@ -15,21 +16,22 @@ const pushProjectToUser = (projectId, user) => {
 
 module.exports.postProject = async (req, res, next) => {
     const {
-        title, description, isAllowMemberAddMember, isAllowMemberCreateJob
+        title,
+        description,
+        isAllowMemberAddMember,
+        isAllowMemberCreateJob
     } = req.body
     const signedUser = req.user
     try {
-        const project = await Project.create(
-            {
-                title,
-                description,
-                allowed: {
-                    isAllowMemberAddMember,
-                    isAllowMemberCreateJob,
-                },
-                members: [signedUser._id]
-            }
-        )
+        const project = await Project.create({
+            title,
+            description,
+            allowed: {
+                isAllowMemberAddMember,
+                isAllowMemberCreateJob,
+            },
+            members: [signedUser._id]
+        })
 
         await pushProjectToUser(project._id, signedUser)
 
@@ -209,21 +211,34 @@ module.exports.getProject = async (req, res, next) => {
     }
 }
 
+const getVerifyUsers = (arrayUserIds) => {
+    return User.find({ _id: { $in: arrayUserIds } })
+}
+
+const getVerifyUserIds = (userIds) => {
+    return getVerifyUsers(userIds)
+        .then(verifyUsers => {
+            if (verifyUsers.length === 0) throw 'Can not find any user"'
+            return verifyUsers.map(user => user._id)
+        })
+}
+
 const populateProjectInUser = (userId) => {
     return User
         .findById(userId)
         .populate('projects._id', 'title')
 }
 
-const getVerifyUsers = (arrayUserIds) => {
-    return User.find({ _id: { $in: arrayUserIds } })
-}
+const getProjectPropertyInUser = (userId, projectId) => {
+    return populateProjectInUser(userId)
+        .then(user => {
+            let getProject = user.projects.find(
+                project => project._id.equals(projectId))
 
+            if (!getProject) throw 'User is not in project'
 
-const getProjectPropertyInUser = (user, projectId) => {
-    return user.projects.find(
-        project => project._id.equals(projectId)
-    )
+            return getProject
+        })
 }
 
 const splitUserIds = (userIds) => {
@@ -236,12 +251,16 @@ const splitUserIds = (userIds) => {
     }
 }
 
-const setMembersInProject = ({ projectId, userIds, session }) => {
-    return Project.findOneAndUpdate(
-        { _id: projectId },
+const addMembersToProject = ({ projectId, userIds, session }) => {
+    return Project.findByIdAndUpdate(
+        projectId,
         { $addToSet: { members: { $each: userIds } } },
-        { new: true }
-    ).select('members').session(session)
+        { new: true },
+        (_error, doc) => {
+            if (!doc) throw "Can not find project"
+        }
+    )
+        .select('members').session(session)
 }
 
 const pushProjectToUsers = ({ projectId, userIds, session }) => {
@@ -293,19 +312,13 @@ module.exports.addMembers = async (req, res, next) => {
         await session.withTransaction(async () => {
             const arrayUserIds = splitUserIds(userIds)
 
-            const [populateUser, verifyUsers] = await Promise.all([
-                populateProjectInUser(signedUser._id),
-                getVerifyUsers(arrayUserIds)
+            const [projectInUser, verifyUserIds] = await Promise.all([
+                getProjectPropertyInUser(signedUser._id, projectId),
+                getVerifyUserIds(arrayUserIds)
             ])
 
-            const projectInUser = getProjectPropertyInUser(populateUser, projectId)
-            const verifyUserIds = verifyUsers.map(user => user._id)
-
-            if (!projectInUser) throw 'User is not in project'
-            if (verifyUsers.length === 0) throw "Can not find any user"
-
             const [projectWillAddMembers, ,] = await Promise.all([
-                setMembersInProject({ projectId, userIds: verifyUserIds, session }),
+                addMembersToProject({ projectId, userIds: verifyUserIds, session }),
                 pushProjectToUsers({ projectId, userIds: verifyUserIds, session }),
                 createNotifyJoinProject({
                     message: `${signedUser.name} invite you join project ${projectInUser._id.title}`,
@@ -314,9 +327,6 @@ module.exports.addMembers = async (req, res, next) => {
                     session
                 })
             ])
-
-            if (!projectWillAddMembers)
-                throw "Can not find project"
 
             if (!isAllowed(projectWillAddMembers, projectInUser.role))
                 throw 'Member can not add member'
@@ -444,7 +454,6 @@ module.exports.changeUserRole = async (req, res, next) => {
             if (!user || !project) throw "Can not find user/project or user not a member in project"
 
             res.json({
-                // project, user
                 message: `${user.name} is now ${role}!`, user: { _id: user._id, projects: user.projects }
             })
         })

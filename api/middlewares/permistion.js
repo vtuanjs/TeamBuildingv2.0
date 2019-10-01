@@ -44,7 +44,7 @@ const findProjectIdFromSource = (req, source) => {
     return projectId
 }
 
-const shouldIsAllowedInProject = ({user, projectId, allowed}) => {
+const shouldIsAllowedInProject = ({ user, projectId, allowed }) => {
     return (user && user.projects
         && user.projects.some(project => {
             return project._id.equals(projectId)
@@ -65,10 +65,10 @@ const isInProject = (allowed, source) => {
         const signedUser = req.user
         let projectId = findProjectIdFromSource(req, source)
 
-        if (!projectId) return false
-        
-        if (shouldIsAllowedInProject({user: signedUser, projectId, allowed}))
-            return true
+        if (projectId) {
+            if (shouldIsAllowedInProject({ user: signedUser, projectId, allowed }))
+                return true
+        }
 
         return false
     }
