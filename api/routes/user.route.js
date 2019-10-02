@@ -35,4 +35,3 @@ router.delete("/admin/:userId", authentication.required, checkPermit({
 }), user.deleteUser)
 
 module.exports = router
-

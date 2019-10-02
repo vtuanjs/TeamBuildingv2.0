@@ -3,15 +3,14 @@ const isAllowed = (roleCheck, rolesAllowed) => {
 }
 
 const shouldIsSelfUser = (userIdSelf, userIdCompare, allowed) => {
-    return isAllowed('self', allowed) && userIdCompare
-        && userIdSelf.equals(userIdCompare)
+    return isAllowed('self', allowed) && userIdCompare && userIdSelf.equals(userIdCompare)
 }
 
 const isInUser = (allowed) => {
     if (allowed.indexOf("user") > -1 || allowed.indexOf("self") > -1) {
         allowed += ' admin'
     }
-    
+
     return (req) => {
         if (shouldIsSelfUser(req.user._id, req.params.userId, allowed) || isAllowed(req.user.role, allowed)) {
             return true
@@ -35,16 +34,18 @@ const findProjectIdFromSource = (req, source) => {
         default:
             return false
     }
-    
+
     return projectId
 }
 
-const shouldIsAllowedInProject = ({ user, projectId, allowed }) => {
-    return user && user.projects
-        && user.projects.some(project => {
-            return project._id.equals(projectId)
-                && isAllowed(project.role, allowed)
-        })
+const shouldIsAllowedInProject = ({
+    user,
+    projectId,
+    allowed
+}) => {
+    return user && user.projects && user.projects.some(project => {
+        return project._id.equals(projectId) && isAllowed(project.role, allowed)
+    })
 }
 
 const isInProject = (allowed, source) => {
@@ -60,7 +61,11 @@ const isInProject = (allowed, source) => {
         let projectId = findProjectIdFromSource(req, source)
 
         if (projectId) {
-            if (shouldIsAllowedInProject({ user: signedUser, projectId, allowed }))
+            if (shouldIsAllowedInProject({
+                user: signedUser,
+                projectId,
+                allowed
+            }))
                 return true
         }
 
@@ -71,7 +76,11 @@ const isInProject = (allowed, source) => {
 module.exports = checkPermit = (...checks) => {
     return (req, res, next) => {
         for (let i = 0; i < checks.length; i++) {
-            const { model, role, source } = checks[i]
+            const {
+                model,
+                role,
+                source
+            } = checks[i]
             switch (model) {
                 case 'user':
                     if (isInUser(role)(req)) return next()

@@ -67,4 +67,3 @@ router.post("/:projectId/change-user-role", authentication.required, checkPermit
 }), project.changeUserRole)
 
 module.exports = router
-

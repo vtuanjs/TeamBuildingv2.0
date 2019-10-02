@@ -39,7 +39,9 @@ describe('POST /project', () => {
         }).catch((error) => done(error))
     })
     it('OK, create Project 2', done => {
-        request(app).post('/project').set({ 'x-access-token': ownerProjectTokenKey }).send({
+        request(app).post('/project').set({
+            'x-access-token': ownerProjectTokenKey
+        }).send({
             title: 'Project 2',
             description: 'Project 2 Description'
         }).then(res => {
@@ -318,7 +320,8 @@ describe('PUT /project/:projectId/', () => {
         request(app).put(`/project/${listProjects[0]._id}/`).set({
             'x-access-token': ownerProjectTokenKey
         }).send({
-            title: 'Project Edit', description: 'Description Edit'
+            title: 'Project Edit',
+            description: 'Description Edit'
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
@@ -334,7 +337,10 @@ describe('POST /project/:projectId/change-user-role', () => {
     it('OK, change user role', done => {
         request(app).post(`/project/${listProjects[0]._id}/change-user-role`).set({
             'x-access-token': ownerProjectTokenKey
-        }).send({ userId: userId, role: 'admin' }).then(res => {
+        }).send({
+            userId: userId,
+            role: 'admin'
+        }).then(res => {
             const body = res.body
             body.user.projects.every(project => {
                 expect(project).to.contain.property('role', 'admin')

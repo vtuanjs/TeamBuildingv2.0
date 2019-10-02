@@ -1,6 +1,8 @@
 const User = require('../controllers/user/user.model')
 const jwt = require('jsonwebtoken')
-const { SECRET_STRING } = process.env
+const {
+    SECRET_STRING
+} = process.env
 module.exports.required = async (req, res, next) => {
     let tokenKey = req.headers['x-access-token']
     try {
@@ -16,7 +18,7 @@ module.exports.required = async (req, res, next) => {
         if (user.isBanned === 1) {
             throw "User is blocked"
         }
-        
+
         req.user = user
         return next()
     } catch (error) {
