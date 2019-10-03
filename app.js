@@ -16,6 +16,7 @@ app.use(cookieParser())
 app.use('/user', require('./api/routes/user.route'))
 app.use('/auth', require('./api/routes/auth.route'))
 app.use('/project', require('./api/routes/project.route'))
+app.use('/job', require('./api/routes/job.route'))
 
 app.use(function (_req, res, next) {
     res.header("Access-Control-Allow-Origin", ALLOW_ACCESS_IP);

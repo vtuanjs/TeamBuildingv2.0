@@ -32,10 +32,6 @@ const JobSchema = new Schema({
             type: Number,
             default: 1
         },
-        isAllowMemberCreateJob: {
-            type: Number,
-            default: 1
-        }
     },
     attachFile: [{
         type: String

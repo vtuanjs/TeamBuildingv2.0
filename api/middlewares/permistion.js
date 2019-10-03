@@ -73,6 +73,61 @@ const isInProject = (allowed, source) => {
     }
 }
 
+const findJobIdFromSource = (req, source) => {
+    let jobId
+    switch (source) {
+        case "body":
+            jobId = req.body.jobId
+            break;
+        case "params":
+            jobId = req.params.jobId
+            break;
+        case "query":
+            jobId = req.query.jobId
+            break;
+        default:
+            return false
+    }
+
+    return jobId
+}
+
+const shouldIsAllowedInJob = ({
+    user,
+    jobId,
+    allowed
+}) => {
+    return user && user.jobs && user.jobs.some(job => {
+        return job._id.equals(jobId) && isAllowed(job.role, allowed)
+    })
+}
+
+const isInJob = (allowed, source) => {
+    if (allowed.indexOf("admin") > -1) {
+        allowed += ' owner'
+    }
+    if (allowed.indexOf("user") > -1) {
+        allowed += ' admin owner'
+    }
+
+    return (req) => {
+        const signedUser = req.user
+        let jobId = findJobIdFromSource(req, source)
+
+        if (jobId) {
+            if (shouldIsAllowedInJob({
+                user: signedUser,
+                jobId,
+                allowed
+            })) {
+                return true
+            }
+        }
+
+        return false
+    }
+}
+
 module.exports = checkPermit = (...checks) => {
     return (req, res, next) => {
         for (let i = 0; i < checks.length; i++) {
@@ -86,6 +141,8 @@ module.exports = checkPermit = (...checks) => {
                     if (isInUser(role)(req)) return next()
                 case 'project':
                     if (isInProject(role, source)(req)) return next()
+                case 'job':
+                    if (isInJob(role, source)(req)) return next()
                 default:
                     break
             }

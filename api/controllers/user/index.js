@@ -7,6 +7,10 @@ const validatePassword = (password) => {
     return password.match(pwdRegex)
 }
 
+const encryptedPassword = (password) => {
+    return bcrypt.hash(password, 10) //saltRounds = 10
+}
+
 module.exports.postUser = async (req, res, next) => {
     const {
         name,
@@ -18,12 +22,10 @@ module.exports.postUser = async (req, res, next) => {
             throw "Password must be eight characters or longer, must contain at least 1 numeric character, 1 lowercase charater"
         }
 
-        const encryptedPassword = await bcrypt.hash(password, 10) //saltRounds = 10
-
         const user = await User.create({
             name,
             email,
-            password: encryptedPassword
+            password: await encryptedPassword(password)
         })
 
         return res.json({
@@ -42,10 +44,6 @@ const isAdminExist = () => {
     })
 }
 
-const encryptedPassword = (password) => {
-    return bcrypt.hash(password, 10) //saltRounds = 10
-}
-
 module.exports.postAdmin = async (req, res, next) => {
     const {
         name,
@@ -60,13 +58,11 @@ module.exports.postAdmin = async (req, res, next) => {
             throw "Password must be eight characters or longer, must contain at least 1 numeric character, 1 lowercase charater"
         }
 
-        const encryptedPwd = await encryptedPassword(password)
-
         const user = await User.create({
             name,
             email,
             role: "admin",
-            password: encryptedPwd
+            password: await encryptedPassword(password)
         })
 
         return res.json({

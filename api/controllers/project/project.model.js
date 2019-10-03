@@ -27,10 +27,6 @@ const ProjectSchema = new Schema({
         isAllowMemberAddMember: {
             type: Number,
             default: 1
-        },
-        isAllowMemberCreateJob: {
-            type: Number,
-            default: 1
         }
     }
 }, {

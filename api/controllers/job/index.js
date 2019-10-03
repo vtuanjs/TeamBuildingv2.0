@@ -19,26 +19,22 @@ module.exports.postJob = async (req, res, next) => {
         title,
         description,
         isAllowMemberAddMember,
-        isAllowMemberCreateJob
     } = req.body
-    const {
-        jobId
-    } = req.query
+    const projectId = req.query.projectId
     const signedUser = req.user
     try {
-        const job = await Job.findById(jobId)
-        if (!job) throw 'Job not found'
+        const project = await Project.findById(projectId)
+        if (!project) throw 'Project not found'
 
         const job = await Job.create({
             title,
             description,
             allowed: {
                 isAllowMemberAddMember,
-                isAllowMemberCreateJob,
             },
             members: [signedUser._id],
-            parent: jobId,
-            onModel: 'Job'
+            parent: projectId,
+            onModel: 'Project'
         })
 
         await pushJobToUser(job._id, signedUser)
@@ -57,11 +53,8 @@ module.exports.postSubJob = async (req, res, next) => {
         title,
         description,
         isAllowMemberAddMember,
-        isAllowMemberCreateJob
     } = req.body
-    const {
-        parentJobId
-    } = req.query
+    const parentJobId = req.query.jobId
     const signedUser = req.user
     try {
         const parentJob = await Job.findById(parentJobId)
@@ -72,7 +65,6 @@ module.exports.postSubJob = async (req, res, next) => {
             description,
             allowed: {
                 isAllowMemberAddMember,
-                isAllowMemberCreateJob,
             },
             members: [signedUser._id],
             parent: parentJobId,
@@ -90,23 +82,134 @@ module.exports.postSubJob = async (req, res, next) => {
     }
 }
 
-const setIsDeletedStatus = (jobId, status) => {
+const filterJob = (query, filter) => {
+    if (!filter) {
+        return {
+            ...query,
+            isStored: 0,
+            isDeleted: 0
+        }
+    }
+
+    switch (filter) {
+        case 'isStored':
+            query = {
+                ...query,
+                isStored: 1
+            }
+            break
+        case 'isDeleted':
+            query = {
+                ...query,
+                isDeleted: 1
+            }
+            break
+        default:
+            break
+    }
+
+    return query
+}
+
+const queryGetJobs = (projectId, filter) => {
+    let query = {
+        parent: projectId,
+        onModel: 'Project'
+    }
+
+    return filterJob(query, filter)
+}
+
+module.exports.getJobs = async (req, res, next) => {
+    const filter = req.query.filter
+    const { projectId } = req.query
+
+    try {
+        const jobs = await Job.find(
+            queryGetJobs(projectId, filter),
+            "title createdAt"
+        )
+
+        if (!jobs) throw "Can not show job"
+
+        return res.json({
+            jobs
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+const queryGetSubJobs = (jobId, filter) => {
+    let query = {
+        parent: jobId,
+        onModel: 'Job'
+    }
+
+    return filterJob(query, filter)
+}
+
+module.exports.getSubJobs = async (req, res, next) => {
+    const filter = req.query.filter
+    const { jobId } = req.query
+
+    try {
+        const jobs = await Job.find(
+            queryGetSubJobs(jobId, filter),
+            "title createdAt"
+        )
+
+        if (!jobs) throw "Can not show job"
+
+        return res.json({
+            jobs
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+module.exports.getJob = async (req, res, next) => {
+    const jobId = req.params.jobId
+
+    try {
+        const job = await Job.findById(jobId)
+
+        if (!job) throw "Wrong job id"
+
+        return res.json({
+            job
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+const setJobStatus = ({ jobId, status, value }) => {
+    let queryUpdate
+    switch (status) {
+        case 'isDeleted':
+            queryUpdate = { isDeleted: value }
+            break
+        case 'isStored':
+            queryUpdate = { isStored: value }
+            break
+        default:
+            break
+    }
     return Job.findByIdAndUpdate(
-        jobId, {
-        isDeleted: status
-    }, {
+        jobId,
+        queryUpdate, {
         upsert: true,
         new: true
     }
-    ).select('title isDeleted')
+    ).select('title isDeleted isStored')
 }
 
 module.exports.deleteJob = async (req, res, next) => {
-    const {
-        jobId
-    } = req.params
+    const jobId = req.params.jobId
     try {
-        const job = await setIsDeletedStatus(jobId, 1)
+        const job = await setJobStatus({ jobId, status: 'isDeleted', value: 1 })
 
         if (!job) throw "Can not find job"
 
@@ -120,11 +223,9 @@ module.exports.deleteJob = async (req, res, next) => {
 }
 
 module.exports.undoDeleteJob = async (req, res, next) => {
-    const {
-        jobId
-    } = req.params
+    const jobId = req.params.jobId
     try {
-        const job = await setIsDeletedStatus(jobId, 0)
+        const job = await setJobStatus({ jobId, status: 'isDeleted', value: 0 })
 
         if (!job) throw "Can not find job"
 
@@ -138,9 +239,7 @@ module.exports.undoDeleteJob = async (req, res, next) => {
 }
 
 module.exports.deleteImmediately = async (req, res, next) => {
-    const {
-        jobId
-    } = req.params
+    const jobId = req.params.jobId
 
     try {
         const raw = await Job.deleteOne({
@@ -156,23 +255,14 @@ module.exports.deleteImmediately = async (req, res, next) => {
     }
 }
 
-const setIsStoredStatus = (jobId, status) => {
-    return Job.findByIdAndUpdate(
-        jobId, {
-        isStored: status
-    }, {
-        upsert: true,
-        new: true
-    }
-    ).select('title isStored')
-}
-
 module.exports.storedJob = async (req, res, next) => {
-    const {
-        jobId
-    } = req.params
+    const jobId = req.params.jobId
     try {
-        const job = await setIsStoredStatus(jobId, 1)
+        const job = await setJobStatus({
+            jobId,
+            status: 'isStored',
+            value: 1
+        })
 
         if (!job) throw "Can not find job"
 
@@ -186,11 +276,13 @@ module.exports.storedJob = async (req, res, next) => {
 }
 
 module.exports.undoStoredJob = async (req, res, next) => {
-    const {
-        jobId
-    } = req.params
+    const jobId = req.params.jobId
     try {
-        const job = await setIsStoredStatus(jobId, 0)
+        const job = await setJobStatus({
+            jobId,
+            status: 'isStored',
+            value: 0
+        })
 
         if (!job) throw "Can not find job"
 
@@ -203,24 +295,50 @@ module.exports.undoStoredJob = async (req, res, next) => {
     }
 }
 
+const getQueryUpdateJob = ({ title, description, isAllowMemberAddMember }) => {
+    let query = {
+        ...(title && {
+            title
+        }),
+        ...(description && {
+            description
+        })
+    }
+
+    if (isAllowMemberAddMember === 0) {
+        query = {
+            ...query,
+            'allowed.isAllowMemberAddMember': 0
+        }
+    }
+
+    if (isAllowMemberAddMember === 1) {
+        query = {
+            ...query,
+            'allowed.isAllowMemberAddMember': 1
+        }
+    }
+
+    return query
+}
+
 module.exports.updateJob = async (req, res, next) => {
-    const {
-        jobId
-    } = req.params
+    const jobId = req.params.jobId
     const {
         title,
-        description
+        description,
+        isAllowMemberAddMember
     } = req.body
     try {
+        const query = getQueryUpdateJob({
+            title,
+            description,
+            isAllowMemberAddMember
+        })
+
         const job = await Job.findByIdAndUpdate(
-            jobId, {
-            ...(title && {
-                title
-            }),
-            ...(description && {
-                description
-            }),
-        }, {
+            jobId,
+            query, {
             new: true
         }
         )
@@ -229,82 +347,6 @@ module.exports.updateJob = async (req, res, next) => {
 
         return res.json({
             message: `Update job successfully!`,
-            job
-        })
-    } catch (error) {
-        next(error)
-    }
-}
-
-const queryGetJobs = (byUser, filter) => {
-    let query = {
-        members: {
-            $in: [byUser._id]
-        }
-    }
-
-    if (!filter) {
-        query = {
-            ...query,
-            isStored: 0,
-            isDeleted: 0
-        }
-    }
-    if (filter) {
-        switch (filter) {
-            case 'isStored':
-                query = {
-                    ...query,
-                    isStored: 1
-                }
-                break
-            case 'isDeleted':
-                query = {
-                    ...query,
-                    isDeleted: 1
-                }
-                break
-            default:
-                break
-        }
-    }
-
-    return query
-}
-
-module.exports.getJobs = async (req, res, next) => {
-    const {
-        filter
-    } = req.query
-    const signedUser = req.user
-
-    try {
-        const jobs = await Job.find(
-            queryGetJobs(signedUser, filter),
-            "title createdAt"
-        )
-
-        if (!jobs) throw "Can not show job"
-
-        return res.json({
-            jobs
-        })
-    } catch (error) {
-        next(error)
-    }
-}
-
-module.exports.getJob = async (req, res, next) => {
-    const {
-        jobId
-    } = req.params
-
-    try {
-        const job = await Job.findById(jobId)
-
-        if (!job) throw "Wrong job id"
-
-        return res.json({
             job
         })
     } catch (error) {
@@ -323,26 +365,7 @@ const getVerifyUsers = (arrayUserIds) => {
 const getVerifyUserIds = (userIds) => {
     return getVerifyUsers(userIds)
         .then(verifyUsers => {
-            if (verifyUsers.length === 0) throw 'Can not find any user"'
             return verifyUsers.map(user => user._id)
-        })
-}
-
-const populateJobInUser = (userId) => {
-    return User
-        .findById(userId)
-        .populate('jobs._id', 'title')
-}
-
-const getJobPropertyInUser = (userId, jobId) => {
-    return populateJobInUser(userId)
-        .then(user => {
-            let getJob = user.jobs.find(
-                job => job._id.equals(jobId))
-
-            if (!getJob) throw 'User is not in job'
-
-            return getJob
         })
 }
 
@@ -370,11 +393,7 @@ const addMembersToJob = ({
         }
     }, {
         new: true
-    },
-        (_error, doc) => {
-            if (!doc) throw "Can not find job"
-        }
-    ).select('members').session(session)
+    }).select('members').session(session)
 }
 
 const pushJobToUsers = ({
@@ -409,7 +428,7 @@ const createNotifyJoinJob = ({
     let arrayNotifyCreate = []
     for (let index = 0; index < userIds.length; index++) {
         arrayNotifyCreate.push({
-            title: INVITE_JOIN_PROJECT,
+            title: INVITE_JOIN_JOB,
             message: message,
             secretKey: {
                 jobId
@@ -423,31 +442,39 @@ const createNotifyJoinJob = ({
     })
 }
 
-const isAllowed = (job, role) => {
-    if (!job.allowed.isAllowMemberAddMember &&
-        role === 'user')
+const isAllowed = ({ job, idCheck, userCheck }) => {
+    if (!job.allowed.isAllowMemberAddMember && userCheck.jobs.some(item => {
+        return item._id.equals(idCheck) && item.role === 'user'
+    })) {
         return false
-
+    }
     return true
 }
 
 module.exports.addMembers = async (req, res, next) => {
-    const {
-        userIds
-    } = req.body
-    const {
-        jobId
-    } = req.params
+    const userIds = req.body.userIds
+    const jobId = req.params.jobId
     const signedUser = req.user
     const session = await mongoose.startSession()
     try {
         await session.withTransaction(async () => {
             const arrayUserIds = splitUserIds(userIds)
 
-            const [jobInUser, verifyUserIds] = await Promise.all([
-                getJobPropertyInUser(signedUser._id, jobId),
+            // Verify job and users will add to job
+            const [job, verifyUserIds] = await Promise.all([
+                Job.findById(jobId),
                 getVerifyUserIds(arrayUserIds)
             ])
+
+            if (verifyUserIds.length === 0) throw 'Can not find any user"'
+
+            if (!isAllowed({
+                job,
+                idCheck: jobId,
+                userCheck: signedUser
+            })) {
+                throw 'Member can not add member'
+            }
 
             const [jobWillAddMembers, ,] = await Promise.all([
                 addMembersToJob({
@@ -461,16 +488,12 @@ module.exports.addMembers = async (req, res, next) => {
                     session
                 }),
                 createNotifyJoinJob({
-                    message: `${signedUser.name} invite you join job ${jobInUser._id.title}`,
+                    message: `${signedUser.name} invite you join job ${job.title}`,
                     jobId,
                     userIds: arrayUserIds,
                     session
                 })
             ])
-
-            if (!isAllowed(jobWillAddMembers, jobInUser.role)) {
-                throw 'Member can not add member'
-            }
 
             return res.json({
                 message: `Add member successfully!`,
@@ -483,9 +506,7 @@ module.exports.addMembers = async (req, res, next) => {
 }
 
 module.exports.agreeJoinJob = async (req, res, next) => {
-    const {
-        jobId
-    } = req.params
+    const jobId = req.params.jobId
     const signedUser = req.user
     try {
         await Promise.all([
@@ -500,7 +521,7 @@ module.exports.agreeJoinJob = async (req, res, next) => {
 
             Notify.updateOne({
                 user: signedUser._id,
-                title: INVITE_JOIN_PROJECT,
+                title: INVITE_JOIN_JOB,
                 'secretKey.jobId': jobId
             }, {
                 $unset: {
@@ -521,9 +542,7 @@ module.exports.agreeJoinJob = async (req, res, next) => {
 }
 
 module.exports.disAgreeJoinJob = async (req, res, next) => {
-    const {
-        jobId
-    } = req.params
+    const jobId = req.params.jobId
     const signedUser = req.user
     try {
         await Promise.all([
@@ -548,7 +567,7 @@ module.exports.disAgreeJoinJob = async (req, res, next) => {
 
             Notify.updateOne({
                 user: signedUser._id,
-                title: INVITE_JOIN_PROJECT,
+                title: INVITE_JOIN_JOB,
                 'secretKey.jobId': jobId
             }, {
                 $unset: {
@@ -568,14 +587,9 @@ module.exports.disAgreeJoinJob = async (req, res, next) => {
     }
 }
 
-
 module.exports.removeMembers = async (req, res, next) => {
-    const {
-        userIds
-    } = req.body
-    const {
-        jobId
-    } = req.params
+    const userIds = req.body.userIds
+    const { jobId } = req.params
 
     const session = await mongoose.startSession()
     try {
@@ -621,9 +635,7 @@ module.exports.removeMembers = async (req, res, next) => {
 }
 
 module.exports.changeUserRole = async (req, res, next) => {
-    const {
-        jobId
-    } = req.params
+    const jobId = req.params.jobId
     const {
         userId,
         role

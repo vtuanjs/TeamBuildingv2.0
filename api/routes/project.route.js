@@ -49,7 +49,12 @@ router.get("/:projectId", authentication.required, checkPermit({
     source: "params"
 }), project.getProject)
 
-router.post("/:projectId/add-members", authentication.required, project.addMembers)
+router.post("/:projectId/add-members", authentication.required, checkPermit({
+    model: "project",
+    role: "user",
+    source: "params"
+}),project.addMembers)
+
 router.post("/:projectId/remove-members", authentication.required, checkPermit({
     model: "project",
     role: "admin",

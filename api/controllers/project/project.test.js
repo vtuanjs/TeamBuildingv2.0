@@ -5,12 +5,14 @@ const app = require('../../../app')
 
 let ownerProjectTokenKey = ''
 let userTokenKey = ''
+let nonMemberTokenKey = ''
 let listProjects = '' // Use to update, delete this company with Id
 let userIds // Array user will add to project
 let userId
 
-describe('POST /project', () => {
-    before(done => {
+
+describe('PREPARE TESTING PROJECT', () => {
+    it('OK, login user', done => {
         request(app).post(`/auth/login`).send({
             email: 'tuan.nv@amavi.asia',
             password: '12345678c'
@@ -23,12 +25,16 @@ describe('POST /project', () => {
             done()
         }).catch((error) => done(error))
     })
+})
+
+describe('POST /project', () => {
     it('OK, create Project 1', done => {
         request(app).post('/project').set({
             'x-access-token': ownerProjectTokenKey
         }).send({
             title: 'Project 1',
-            description: 'Project 1 Description'
+            description: 'Project 1 Description',
+            isAllowMemberAddMember: 0
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
@@ -98,11 +104,11 @@ describe('POST /project', () => {
             done()
         }).catch((error) => done(error))
     })
-    it('Fail, missing title', done => {
+    it('FAIL, missing title', done => {
         request(app).post('/project').set({
             'x-access-token': ownerProjectTokenKey
         }).send({
-            description: 'Project Fail Description'
+            description: 'Project FAIL Description'
         }).then(res => {
             expect(res.statusCode).to.equals(400)
             done()
@@ -138,14 +144,16 @@ describe('GET /project/:projectId', () => {
     })
 })
 
-describe('POST /project/:projectId/add-members', () => {
-    before(done => {
+describe('PREPARE ADD MEMBERS', () => {
+    it('OK, get users will add to project', done => {
         request(app).get('/user').then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
-            userIds = body.users.map(user => user._id).slice(0, 4)
+            userIds = body.users.map(user => user._id)
+            done()
         }).catch(error => done(error))
-
+    })
+    it('OK, get single user will add to project', done => {
         request(app).get('/user/get-by-email/' + "ngocancsdl@gmail.com").then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
@@ -154,11 +162,25 @@ describe('POST /project/:projectId/add-members', () => {
             done()
         }).catch(error => done(error))
     })
+    it('OK, login non-member project to test permistion', done => {
+        request(app).post(`/auth/login`).send({
+            email: 'mai.huong@amavi.asia',
+            password: '12345678c'
+        }).then(res => {
+            const body = res.body
+            expect(res.statusCode).to.equals(200)
+            nonMemberTokenKey = body.user.tokenKey
+            done()
+        }).catch(error => done(error))
+    })
+})
+
+describe('POST /project/:projectId/add-members', () => {
     it('OK, add list members to project', done => {
         request(app).post(`/project/${listProjects[0]._id}/add-members`).set({
             'x-access-token': ownerProjectTokenKey
         }).send({
-            userIds
+            userIds: userIds.slice(0, 4)
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
@@ -196,6 +218,40 @@ describe('POST /project/:projectId/add-members', () => {
             done()
         }).catch((error) => done(error))
     })
+    it('FAIL, add wrong userId', done => {
+        request(app).post(`/project/${listProjects[1]._id}/add-members`).set({
+            'x-access-token': ownerProjectTokenKey
+        }).send({
+            userIds: '5d9468959767571303701cf8'
+        }).then(res => {
+            expect(res.statusCode).to.equals(400)
+            done()
+        }).catch((error) => done(error))
+    })
+    it('FAIL, wrong projectId', done => {
+        request(app).post(`/project/5d9468959767571303701cf8/add-members`).set({
+            'x-access-token': ownerProjectTokenKey
+        }).send({
+            userIds: '5d9468959767571303701cf8'
+        }).then(res => {
+            expect(res.statusCode).to.satisfy(status => {
+                if (status === 400 || status === 403){
+                    return true
+                }
+            })
+            done()
+        }).catch((error) => done(error))
+    })
+    it('FAIL, not permistion add member to project', done => {
+        request(app).post(`/project/${listProjects[2]._id}/add-members`).set({
+            'x-access-token': nonMemberTokenKey
+        }).send({
+            userIds: userId
+        }).then(res => {
+            expect(res.statusCode).to.equals(403)
+            done()
+        }).catch((error) => done(error))
+    })
 })
 
 describe('POST /project/:projectId/agree-join-project', () => {
@@ -217,6 +273,17 @@ describe('POST /project/:projectId/agree-join-project', () => {
             expect(res.statusCode).to.equals(200)
             done()
         }).catch(error => done(error))
+    })
+    it('FAIL, test user add members', done => {
+        request(app).post(`/project/${listProjects[0]._id}/add-members`).set({
+            'x-access-token': userTokenKey
+        }).send({
+            userIds: userIds[4]
+        }).then(res => {
+            const body = res.body
+            expect(res.statusCode).to.equals(400)
+            done()
+        }).catch((error) => done(error))
     })
     it('OK, disagree join project', done => {
         request(app).post(`/project/${listProjects[1]._id}/disagree-join-project`).set({
@@ -250,16 +317,6 @@ describe('POST /project/:projectId/send-to-trash', () => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
             expect(body).to.contain.property('project')
-            done()
-        }).catch((error) => done(error))
-    })
-    it('OK, check isDeleted = 1 ?', done => {
-        request(app).get(`/project/${listProjects[0]._id}`).set({
-            'x-access-token': ownerProjectTokenKey
-        }).then(res => {
-            const body = res.body
-            expect(res.statusCode).to.equals(200)
-            expect(body).to.contain.property('project')
             expect(body.project.isDeleted).to.equals(1)
             done()
         }).catch((error) => done(error))
@@ -270,16 +327,6 @@ describe('POST /project/:projectId/send-to-trash', () => {
 describe('POST /project/:projectId/restore', () => {
     it('OK, restore project', done => {
         request(app).post(`/project/${listProjects[0]._id}/restore`).set({
-            'x-access-token': ownerProjectTokenKey
-        }).then(res => {
-            const body = res.body
-            expect(res.statusCode).to.equals(200)
-            expect(body).to.contain.property('project')
-            done()
-        }).catch((error) => done(error))
-    })
-    it('OK, check isDeleted = 0 ?', done => {
-        request(app).get(`/project/${listProjects[0]._id}`).set({
             'x-access-token': ownerProjectTokenKey
         }).then(res => {
             const body = res.body
@@ -308,7 +355,11 @@ describe('DELETE /project/:projectId', () => {
             'x-access-token': ownerProjectTokenKey
         }).then(res => {
             const body = res.body
-            expect(res.statusCode).to.equals(403)
+            expect(res.statusCode).to.satisfy(status => {
+                if (status === 400 || status === 403){
+                    return true
+                }
+            })
             expect(body).to.not.contain.property('project')
             done()
         }).catch((error) => done(error))
@@ -316,18 +367,20 @@ describe('DELETE /project/:projectId', () => {
 })
 
 describe('PUT /project/:projectId/', () => {
-    it('OK, edit project', done => {
+    it('OK, edit project, set member can add member', done => {
         request(app).put(`/project/${listProjects[0]._id}/`).set({
             'x-access-token': ownerProjectTokenKey
         }).send({
             title: 'Project Edit',
-            description: 'Description Edit'
+            description: 'Description Edit',
+            isAllowMemberAddMember: 1
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
             expect(body).to.contain.property('project')
             expect(body.project.title).to.equals('Project Edit')
             expect(body.project.description).to.equals('Description Edit')
+            expect(body.project.allowed.isAllowMemberAddMember).to.equals(1)
             done()
         }).catch((error) => done(error))
     })

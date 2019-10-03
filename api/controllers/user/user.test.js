@@ -142,7 +142,7 @@ describe('POST /user', () => {
         }).catch((error) => done(error))
     })
 
-    it('Fail, Password must be eight characters or longer, must contain at least 1 numeric character, 1 lowercase charater', done => {
+    it('FAIL, Password must be eight characters or longer, must contain at least 1 numeric character, 1 lowercase charater', done => {
         request(app).post('/user').send({
             name: 'PWS Join',
             email: 'pwdjoin@gmail.com',
@@ -154,7 +154,7 @@ describe('POST /user', () => {
             done()
         }).catch((error) => done(error))
     })
-    it('Fail, duplicate email', done => {
+    it('FAIL, duplicate email', done => {
         request(app).post('/user').send({
             name: 'Nguyen Van Dung',
             email: 'dung.van@gmail.com',
@@ -167,7 +167,7 @@ describe('POST /user', () => {
             done()
         }).catch((error) => done(error))
     })
-    it('Fail, wrong email format', done => {
+    it('FAIL, wrong email format', done => {
         request(app).post('/user').send({
             name: 'Taylor Swift',
             email: 'taylorgmail.com',
@@ -180,7 +180,7 @@ describe('POST /user', () => {
             done()
         }).catch((error) => done(error))
     })
-    it('Fail, missing email', done => {
+    it('FAIL, missing email', done => {
         request(app).post('/user').send({
             name: 'Taylor Swift',
             password: '12345678g'
@@ -192,7 +192,7 @@ describe('POST /user', () => {
             done()
         }).catch((error) => done(error))
     })
-    it('Fail, missing password', done => {
+    it('FAIL, missing password', done => {
         request(app).post('/user').send({
             name: 'Taylor Swift',
             email: 'taylorgmail.com'
@@ -258,7 +258,7 @@ describe('POST /user/admin', () => {
             done()
         }).catch((error) => done(error))
     })
-    it('Fail, only create admin once time', done => {
+    it('FAIL, only create admin once time', done => {
         request(app).post('/user/admin').send({
             name: 'Admin 2',
             email: 'admin2@gmail.com',
@@ -316,7 +316,7 @@ describe('POST /user/admin/:userIds/block', () => {
             done()
         }).catch((error) => done(error))
     })
-    it('Fail, user not permistion', done => {
+    it('FAIL, user not permistion', done => {
         request(app).post(`/user/admin/${listUsers[1]._id}/block`).set({
             "x-access-token": userTokenKey
         }).then(res => {
@@ -340,7 +340,7 @@ describe('POST /user/admin/:userIds/unlock', () => {
             done()
         }).catch((error) => done(error))
     })
-    it('Fail, user not permistion', done => {
+    it('FAIL, user not permistion', done => {
         request(app).post(`/user/admin/${listUsers[1]._id}/unlock`).set({
             "x-access-token": userTokenKey
         }).then(res => {
@@ -393,7 +393,7 @@ describe('PUT /user/:userId', () => {
             done()
         }).catch((error) => done(error))
     })
-    it('Fail, update user wrong old password', done => {
+    it('FAIL, update user wrong old password', done => {
         request(app).put(`/user/${listUsers[0]._id}`).set({
             "x-access-token": adminTokenKey
         }).send({
@@ -408,7 +408,7 @@ describe('PUT /user/:userId', () => {
             done()
         }).catch((error) => done(error))
     })
-    it('Fail, user not permistion', done => {
+    it('FAIL, user not permistion', done => {
         request(app).put(`/user/${listUsers[0]._id}`).set({
             "x-access-token": userTokenKey
         }).send({
@@ -435,7 +435,7 @@ describe('DELETE /user/admin/:userIds/', () => {
             done()
         }).catch((error) => done(error))
     })
-    it('Fail, user not permistion', done => {
+    it('FAIL, user not permistion', done => {
         request(app).delete(`/user/admin/${listUsers[0]._id}/`).set({
             "x-access-token": userTokenKey
         }).then(res => {

@@ -19,7 +19,6 @@ module.exports.postProject = async (req, res, next) => {
         title,
         description,
         isAllowMemberAddMember,
-        isAllowMemberCreateJob
     } = req.body
     const signedUser = req.user
     try {
@@ -28,7 +27,6 @@ module.exports.postProject = async (req, res, next) => {
             description,
             allowed: {
                 isAllowMemberAddMember,
-                isAllowMemberCreateJob,
             },
             members: [signedUser._id]
         })
@@ -44,23 +42,40 @@ module.exports.postProject = async (req, res, next) => {
     }
 }
 
-const setIsDeletedStatus = (projectId, status) => {
+const setProjectStatus = ({ projectId, status, value }) => {
+    let queryUpdate
+    switch (status) {
+        case 'isDeleted':
+            queryUpdate = {
+                isDeleted: value
+            }
+            break
+        case 'isStored':
+            queryUpdate = {
+                isStored: value
+            }
+            break
+        default:
+            return false
+    }
+
     return Project.findByIdAndUpdate(
-        projectId, {
-        isDeleted: status
-    }, {
+        projectId,
+        queryUpdate, {
         upsert: true,
         new: true
     }
-    ).select('title isDeleted')
+    ).select('title isDeleted isStored')
 }
 
 module.exports.deleteProject = async (req, res, next) => {
-    const {
-        projectId
-    } = req.params
+    const projectId = req.params.projectId
     try {
-        const project = await setIsDeletedStatus(projectId, 1)
+        const project = await setProjectStatus({
+            projectId,
+            status: 'isDeleted',
+            value: 1
+        })
 
         if (!project) throw "Can not find project"
 
@@ -74,11 +89,13 @@ module.exports.deleteProject = async (req, res, next) => {
 }
 
 module.exports.undoDeleteProject = async (req, res, next) => {
-    const {
-        projectId
-    } = req.params
+    const projectId = req.params.projectId
     try {
-        const project = await setIsDeletedStatus(projectId, 0)
+        const project = await setProjectStatus({
+            projectId,
+            status: 'isDeleted',
+            value: 0
+        })
 
         if (!project) throw "Can not find project"
 
@@ -92,9 +109,7 @@ module.exports.undoDeleteProject = async (req, res, next) => {
 }
 
 module.exports.deleteImmediately = async (req, res, next) => {
-    const {
-        projectId
-    } = req.params
+    const projectId = req.params.projectId
 
     try {
         const raw = await Project.deleteOne({
@@ -110,23 +125,14 @@ module.exports.deleteImmediately = async (req, res, next) => {
     }
 }
 
-const setIsStoredStatus = (projectId, status) => {
-    return Project.findByIdAndUpdate(
-        projectId, {
-        isStored: status
-    }, {
-        upsert: true,
-        new: true
-    }
-    ).select('title isStored')
-}
-
 module.exports.storedProject = async (req, res, next) => {
-    const {
-        projectId
-    } = req.params
+    const projectId = req.params.projectId
     try {
-        const project = await setIsStoredStatus(projectId, 1)
+        const project = await setProjectStatus({
+            projectId,
+            status: 'isStored',
+            value: 1
+        })
 
         if (!project) throw "Can not find project"
 
@@ -140,11 +146,13 @@ module.exports.storedProject = async (req, res, next) => {
 }
 
 module.exports.undoStoredProject = async (req, res, next) => {
-    const {
-        projectId
-    } = req.params
+    const projectId = req.params.projectId
     try {
-        const project = await setIsStoredStatus(projectId, 0)
+        const project = await await setProjectStatus({
+            projectId,
+            status: 'isStored',
+            value: 0
+        })
 
         if (!project) throw "Can not find project"
 
@@ -157,24 +165,51 @@ module.exports.undoStoredProject = async (req, res, next) => {
     }
 }
 
+const getQueryUpdateProject = ({ title, description, isAllowMemberAddMember }) => {
+    let query = {
+        ...(title && {
+            title
+        }),
+        ...(description && {
+            description
+        })
+    }
+
+    if (isAllowMemberAddMember === 0) {
+        query = {
+            ...query,
+            'allowed.isAllowMemberAddMember': 0
+        }
+    }
+
+    if (isAllowMemberAddMember === 1) {
+        query = {
+            ...query,
+            'allowed.isAllowMemberAddMember': 1
+        }
+    }
+
+    return query
+}
+
 module.exports.updateProject = async (req, res, next) => {
-    const {
-        projectId
-    } = req.params
+    const projectId = req.params.projectId
     const {
         title,
-        description
+        description,
+        isAllowMemberAddMember,
     } = req.body
     try {
+
+        const query = getQueryUpdateProject({
+            title,
+            description,
+            isAllowMemberAddMember
+        })
+
         const project = await Project.findByIdAndUpdate(
-            projectId, {
-            ...(title && {
-                title
-            }),
-            ...(description && {
-                description
-            }),
-        }, {
+            projectId,
+            query, {
             new: true
         }
         )
@@ -227,9 +262,7 @@ const queryGetProjects = (byUser, filter) => {
 }
 
 module.exports.getProjects = async (req, res, next) => {
-    const {
-        filter
-    } = req.query
+    const filter = req.query.filter
     const signedUser = req.user
 
     try {
@@ -249,9 +282,7 @@ module.exports.getProjects = async (req, res, next) => {
 }
 
 module.exports.getProject = async (req, res, next) => {
-    const {
-        projectId
-    } = req.params
+    const projectId = req.params.projectId
 
     try {
         const project = await Project.findById(projectId)
@@ -277,26 +308,7 @@ const getVerifyUsers = (arrayUserIds) => {
 const getVerifyUserIds = (userIds) => {
     return getVerifyUsers(userIds)
         .then(verifyUsers => {
-            if (verifyUsers.length === 0) throw 'Can not find any user"'
             return verifyUsers.map(user => user._id)
-        })
-}
-
-const populateProjectInUser = (userId) => {
-    return User
-        .findById(userId)
-        .populate('projects._id', 'title')
-}
-
-const getProjectPropertyInUser = (userId, projectId) => {
-    return populateProjectInUser(userId)
-        .then(user => {
-            const getProject = user.projects.find(
-                project => project._id.equals(projectId))
-
-            if (!getProject) throw 'User is not in project'
-
-            return getProject
         })
 }
 
@@ -324,11 +336,7 @@ const addMembersToProject = ({
         }
     }, {
         new: true
-    },
-        (_error, doc) => {
-            if (!doc) throw "Can not find project"
-        }
-    ).select('members').session(session)
+    }).select('members').session(session)
 }
 
 const pushProjectToUsers = ({
@@ -377,31 +385,39 @@ const createNotifyJoinProject = ({
     })
 }
 
-const isAllowed = (project, role) => {
-    if (!project.allowed.isAllowMemberAddMember &&
-        role === 'user')
+const isAllowed = ({ project, idCheck, userCheck }) => {
+    if (!project.allowed.isAllowMemberAddMember && userCheck.projects.some(item => {
+        return item._id.equals(idCheck) && item.role === 'user'
+    })) {
         return false
-
+    }
     return true
 }
 
 module.exports.addMembers = async (req, res, next) => {
-    const {
-        userIds
-    } = req.body
-    const {
-        projectId
-    } = req.params
+    const userIds = req.body.userIds
+    const projectId = req.params.projectId
     const signedUser = req.user
     const session = await mongoose.startSession()
     try {
         await session.withTransaction(async () => {
             const arrayUserIds = splitUserIds(userIds)
 
-            const [projectInUser, verifyUserIds] = await Promise.all([
-                getProjectPropertyInUser(signedUser._id, projectId),
+            // Verify project and users will add to project
+            const [project, verifyUserIds] = await Promise.all([
+                Project.findById(projectId),
                 getVerifyUserIds(arrayUserIds)
             ])
+
+            if (verifyUserIds.length === 0) throw 'Can not find any user"'
+
+            if (!isAllowed({
+                project,
+                idCheck: projectId,
+                userCheck: signedUser
+            })) {
+                throw 'Member can not add member'
+            }
 
             const [projectWillAddMembers, ,] = await Promise.all([
                 addMembersToProject({
@@ -415,16 +431,12 @@ module.exports.addMembers = async (req, res, next) => {
                     session
                 }),
                 createNotifyJoinProject({
-                    message: `${signedUser.name} invite you join project ${projectInUser._id.title}`,
+                    message: `${signedUser.name} invite you join project ${project.title}`,
                     projectId,
                     userIds: arrayUserIds,
                     session
                 })
             ])
-
-            if (!isAllowed(projectWillAddMembers, projectInUser.role)) {
-                throw 'Member can not add member'
-            }
 
             return res.json({
                 message: `Add member successfully!`,
@@ -437,9 +449,7 @@ module.exports.addMembers = async (req, res, next) => {
 }
 
 module.exports.agreeJoinProject = async (req, res, next) => {
-    const {
-        projectId
-    } = req.params
+    const projectId = req.params.projectId
     const signedUser = req.user
     try {
         await Promise.all([
@@ -475,9 +485,7 @@ module.exports.agreeJoinProject = async (req, res, next) => {
 }
 
 module.exports.disAgreeJoinProject = async (req, res, next) => {
-    const {
-        projectId
-    } = req.params
+    const projectId = req.params.projectId
     const signedUser = req.user
     try {
         await Promise.all([
@@ -524,9 +532,7 @@ module.exports.disAgreeJoinProject = async (req, res, next) => {
 
 
 module.exports.removeMembers = async (req, res, next) => {
-    const {
-        userIds
-    } = req.body
+    const userIds = req.body.userIds
     const {
         projectId
     } = req.params
@@ -575,9 +581,7 @@ module.exports.removeMembers = async (req, res, next) => {
 }
 
 module.exports.changeUserRole = async (req, res, next) => {
-    const {
-        projectId
-    } = req.params
+    const projectId = req.params.projectId
     const {
         userId,
         role
