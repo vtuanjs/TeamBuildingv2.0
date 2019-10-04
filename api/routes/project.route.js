@@ -53,7 +53,7 @@ router.post("/:projectId/add-members", authentication.required, checkPermit({
     model: "project",
     role: "user",
     source: "params"
-}),project.addMembers)
+}), project.addMembers)
 
 router.post("/:projectId/remove-members", authentication.required, checkPermit({
     model: "project",
