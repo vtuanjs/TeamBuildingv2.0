@@ -19,15 +19,15 @@ const ProjectSchema = new Schema({
         type: Number,
         default: 0
     },
-    members: [{
-        type: ObjectId,
-        ref: "User"
-    }],
     allowed: {
         isAllowMemberAddMember: {
             type: Number,
             default: 1
         }
+    },
+    author: {
+        type: ObjectId,
+        ref: 'User'
     }
 }, {
     timestamps: true,

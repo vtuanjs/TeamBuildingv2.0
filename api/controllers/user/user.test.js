@@ -1,8 +1,6 @@
 'use strict'
 const expect = require('chai').expect
 const request = require('supertest')
-
-const database = require('../../../database')
 const app = require('../../../app')
 
 let adminTokenKey = '' // Save token key after login
@@ -10,11 +8,6 @@ let userTokenKey
 let listUsers = '' // Use to update, delete this userId
 
 describe('POST /user', () => {
-    before(done => {
-        database.connect().then(() => {
-            return done()
-        }).catch((error) => done(error));
-    })
     it('OK, create new user with email dung.van@gmail.com', done => {
         request(app).post('/user').send({
             name: 'Nguyen Van Dung',

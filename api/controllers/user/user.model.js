@@ -60,7 +60,7 @@ const UserSchema = new Schema({
         },
         isJoined: {
             type: Number,
-            default: 1
+            default: 0
         },
     }],
     jobs: [{
@@ -74,7 +74,7 @@ const UserSchema = new Schema({
         },
         isJoined: {
             type: Number,
-            default: 1
+            default: 0
         },
     }],
     teams: [{
@@ -88,12 +88,8 @@ const UserSchema = new Schema({
         },
         isJoined: {
             type: Number,
-            default: 1
+            default: 0
         },
-    }],
-    comments: [{
-        type: ObjectId,
-        ref: "Comment"
     }]
 }, {
     timestamps: true,

@@ -1,6 +1,5 @@
 const Job = require('./job.model')
 const User = require('../user/user.model')
-const Project = require('../project/project.model')
 const Notify = require('../notify/notify.model')
 const mongoose = require('mongoose')
 const INVITE_JOIN_JOB = 'Invite Join Job'
@@ -8,10 +7,27 @@ const INVITE_JOIN_JOB = 'Invite Join Job'
 const pushJobToUser = (jobId, user) => {
     user.jobs.push({
         _id: jobId,
-        role: "owner"
+        role: "owner",
+        isJoined: 1
     })
 
     return user.save()
+}
+
+const pushJobToProjectOwner = (jobId, projectId) => {
+    return User.updateOne({
+        'projects._id': projectId,
+        'projects.role': 'owner'
+    }, {
+        $addToSet: {
+            jobs: {
+                _id: jobId,
+                role: 'owner',
+                isJoined: 1
+            }
+        }
+    }
+    )
 }
 
 module.exports.postJob = async (req, res, next) => {
@@ -23,21 +39,20 @@ module.exports.postJob = async (req, res, next) => {
     const projectId = req.query.projectId
     const signedUser = req.user
     try {
-        const project = await Project.findById(projectId)
-        if (!project) throw 'Project not found'
-
         const job = await Job.create({
             title,
             description,
             allowed: {
                 isAllowMemberAddMember,
             },
-            members: [signedUser._id],
+            author: signedUser._id,
             parent: projectId,
             onModel: 'Project'
         })
-
-        await pushJobToUser(job._id, signedUser)
+        await Promise.all([
+            pushJobToUser(job._id, signedUser),
+            pushJobToProjectOwner(job._id, projectId)
+        ])
 
         return res.json({
             message: `Create job successfully!`,
@@ -46,6 +61,22 @@ module.exports.postJob = async (req, res, next) => {
     } catch (error) {
         next(error)
     }
+}
+
+const pushJobToParentJobOwner = (jobId, parentJobId) => {
+    return User.updateOne({ 
+        'jobs._id': parentJobId,
+        'jobs.role': 'owner'
+    },{
+            $addToSet: {
+                jobs: {
+                    _id: jobId,
+                    role: 'owner',
+                    isJoined: 1
+                }
+            }
+        }
+    )
 }
 
 module.exports.postSubJob = async (req, res, next) => {
@@ -66,12 +97,15 @@ module.exports.postSubJob = async (req, res, next) => {
             allowed: {
                 isAllowMemberAddMember,
             },
-            members: [signedUser._id],
+            author: signedUser._id,
             parent: parentJobId,
             onModel: 'Job'
         })
 
-        await pushJobToUser(job._id, signedUser)
+        await Promise.all([
+            pushJobToUser(job._id, signedUser),
+            pushJobToParentJobOwner(job._id, parentJobId)
+        ])
 
         return res.json({
             message: `Create job successfully!`,
@@ -379,28 +413,7 @@ const splitUserIds = (userIds) => {
     }
 }
 
-const addMembersToJob = ({
-    jobId,
-    userIds,
-    session
-}) => {
-    return Job.findByIdAndUpdate(
-        jobId, {
-        $addToSet: {
-            members: {
-                $each: userIds
-            }
-        }
-    }, {
-        new: true
-    }).select('members').session(session)
-}
-
-const pushJobToUsers = ({
-    jobId,
-    userIds,
-    session
-}) => {
+const pushJobToUsers = ({ jobId, userIds, session }) => {
     return User.updateMany({
         _id: {
             $in: userIds
@@ -476,12 +489,7 @@ module.exports.addMembers = async (req, res, next) => {
                 throw 'Member can not add member'
             }
 
-            const [jobWillAddMembers, ,] = await Promise.all([
-                addMembersToJob({
-                    jobId,
-                    userIds: verifyUserIds,
-                    session
-                }),
+            await Promise.all([
                 pushJobToUsers({
                     jobId,
                     userIds: verifyUserIds,
@@ -497,7 +505,6 @@ module.exports.addMembers = async (req, res, next) => {
 
             return res.json({
                 message: `Add member successfully!`,
-                job: jobWillAddMembers
             })
         })
     } catch (error) {
@@ -557,14 +564,6 @@ module.exports.disAgreeJoinJob = async (req, res, next) => {
                 }
             }),
 
-            Job.updateOne({
-                _id: jobId
-            }, {
-                $pull: {
-                    members: signedUser._id
-                }
-            }),
-
             Notify.updateOne({
                 user: signedUser._id,
                 title: INVITE_JOIN_JOB,
@@ -590,45 +589,27 @@ module.exports.disAgreeJoinJob = async (req, res, next) => {
 module.exports.removeMembers = async (req, res, next) => {
     const userIds = req.body.userIds
     const { jobId } = req.params
-
-    const session = await mongoose.startSession()
     try {
-        await session.withTransaction(async () => {
+        const arrayUserIds = splitUserIds(userIds)
 
-            const arrayUserIds = splitUserIds(userIds)
-
-            const [job,] = await Promise.all([
-                Job.findByIdAndUpdate(
-                    jobId, {
-                    $pullAll: {
-                        members: arrayUserIds
-                    }
-                }, {
-                    new: true
+        await Promise.all([
+            User.updateMany({
+                _id: {
+                    $in: arrayUserIds
                 }
-                ).session(session),
-
-                User.updateMany({
-                    _id: {
-                        $in: arrayUserIds
+            }, {
+                $unset: {
+                    jobs: {
+                        _id: jobId
                     }
-                }, {
-                    $unset: {
-                        jobs: {
-                            _id: jobId
-                        }
-                    }
-                }).session(session)
-            ])
-
-            if (!job)
-                throw "Can not find job"
-
-            return res.json({
-                message: `Remove member successfully!`,
-                job
+                }
             })
+        ])
+
+        return res.json({
+            message: `Remove member successfully!`
         })
+
     } catch (error) {
         next(error)
     }
@@ -636,39 +617,27 @@ module.exports.removeMembers = async (req, res, next) => {
 
 module.exports.changeUserRole = async (req, res, next) => {
     const jobId = req.params.jobId
-    const {
-        userId,
-        role
-    } = req.body
-
-    const session = await mongoose.startSession()
+    const { userId, role } = req.body
     try {
-        await session.withTransaction(async () => {
-            const [job, user] = await Promise.all([
-                Job.findById(jobId),
-                User.findOneAndUpdate({
-                    _id: userId
-                }, {
-                    $set: {
-                        "jobs.$[element].role": role
-                    }
-                }, {
-                    arrayFilters: [{
-                        'element._id': jobId
-                    }],
-                    new: true
-                }).session(session)
-            ])
-
-            if (!user || !job) throw "Can not find user/job or user not a member in job"
-
-            return res.json({
-                message: `${user.name} is now ${role}!`,
-                user: {
-                    _id: user._id,
-                    jobs: user.jobs
+        const user = await Promise.all([
+            User.findOneAndUpdate({
+                _id: userId
+            }, {
+                $set: {
+                    "jobs.$[element].role": role
                 }
+            }, {
+                arrayFilters: [{
+                    'element._id': jobId
+                }],
+                new: true
             })
+        ])
+
+        if (!user) throw "Can not find user or user not a member in job"
+
+        return res.json({
+            message: `${user.name} is now ${role}!`,
         })
     } catch (error) {
         next(error)

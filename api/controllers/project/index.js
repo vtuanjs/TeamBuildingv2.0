@@ -8,7 +8,8 @@ const INVITE_JOIN_PROJECT = 'Invite Join Project'
 const pushProjectToUser = (projectId, user) => {
     user.projects.push({
         _id: projectId,
-        role: "owner"
+        role: "owner",
+        isJoined: 1
     })
 
     return user.save()
@@ -25,10 +26,10 @@ module.exports.postProject = async (req, res, next) => {
         const project = await Project.create({
             title,
             description,
+            author: signedUser._id,
             allowed: {
                 isAllowMemberAddMember,
-            },
-            members: [signedUser._id]
+            }
         })
 
         await pushProjectToUser(project._id, signedUser)
@@ -225,54 +226,24 @@ module.exports.updateProject = async (req, res, next) => {
     }
 }
 
-const queryGetProjects = (byUser, filter) => {
-    let query = {
-        members: {
-            $in: [byUser._id]
-        }
-    }
-
-    if (!filter) {
-        query = {
-            ...query,
-            isStored: 0,
-            isDeleted: 0
-        }
-    }
-    if (filter) {
-        switch (filter) {
-            case 'isStored':
-                query = {
-                    ...query,
-                    isStored: 1
-                }
-                break
-            case 'isDeleted':
-                query = {
-                    ...query,
-                    isDeleted: 1
-                }
-                break
-            default:
-                break
-        }
-    }
-
-    return query
-}
-
 module.exports.getProjects = async (req, res, next) => {
-    const filter = req.query.filter
     const signedUser = req.user
 
     try {
+        const arrayProject = signedUser.projects.map(project => {
+            return project._id
+        })
+
         const projects = await Project.find(
-            queryGetProjects(signedUser, filter),
+            {
+                _id: {
+                    $in: arrayProject
+                }
+            },
             "title createdAt"
         )
 
         if (!projects) throw "Can not show project"
-
         return res.json({
             projects
         })
@@ -320,23 +291,6 @@ const splitUserIds = (userIds) => {
     } else {
         return userIds
     }
-}
-
-const addMembersToProject = ({
-    projectId,
-    userIds,
-    session
-}) => {
-    return Project.findByIdAndUpdate(
-        projectId, {
-        $addToSet: {
-            members: {
-                $each: userIds
-            }
-        }
-    }, {
-        new: true
-    }).select('members').session(session)
 }
 
 const pushProjectToUsers = ({
@@ -419,12 +373,7 @@ module.exports.addMembers = async (req, res, next) => {
                 throw 'Member can not add member'
             }
 
-            const [projectWillAddMembers, ,] = await Promise.all([
-                addMembersToProject({
-                    projectId,
-                    userIds: verifyUserIds,
-                    session
-                }),
+            await Promise.all([
                 pushProjectToUsers({
                     projectId,
                     userIds: verifyUserIds,
@@ -439,8 +388,7 @@ module.exports.addMembers = async (req, res, next) => {
             ])
 
             return res.json({
-                message: `Add member successfully!`,
-                project: projectWillAddMembers
+                message: `Add member successfully!`
             })
         })
     } catch (error) {
@@ -500,14 +448,6 @@ module.exports.disAgreeJoinProject = async (req, res, next) => {
                 }
             }),
 
-            Project.updateOne({
-                _id: projectId
-            }, {
-                $pull: {
-                    members: signedUser._id
-                }
-            }),
-
             Notify.updateOne({
                 user: signedUser._id,
                 title: INVITE_JOIN_PROJECT,
@@ -533,47 +473,24 @@ module.exports.disAgreeJoinProject = async (req, res, next) => {
 
 module.exports.removeMembers = async (req, res, next) => {
     const userIds = req.body.userIds
-    const {
-        projectId
-    } = req.params
-
-    const session = await mongoose.startSession()
+    const { projectId } = req.params
     try {
-        await session.withTransaction(async () => {
+        const arrayUserIds = splitUserIds(userIds)
 
-            const arrayUserIds = splitUserIds(userIds)
-
-            const [project,] = await Promise.all([
-                Project.findByIdAndUpdate(
-                    projectId, {
-                    $pullAll: {
-                        members: arrayUserIds
-                    }
-                }, {
-                    new: true
+        await User.updateMany({
+            _id: {
+                $in: arrayUserIds
+            }
+        }, {
+            $unset: {
+                projects: {
+                    _id: projectId
                 }
-                ).session(session),
+            }
+        })
 
-                User.updateMany({
-                    _id: {
-                        $in: arrayUserIds
-                    }
-                }, {
-                    $unset: {
-                        projects: {
-                            _id: projectId
-                        }
-                    }
-                }).session(session)
-            ])
-
-            if (!project)
-                throw "Can not find project"
-
-            return res.json({
-                message: `Remove member successfully!`,
-                project
-            })
+        return res.json({
+            message: `Remove member successfully!`,
         })
     } catch (error) {
         next(error)

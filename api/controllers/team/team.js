@@ -6,11 +6,7 @@ const TeamSchema = new Schema({
     name: {
         type: String,
         required: true
-    },
-    members: [{
-        type: ObjectId,
-        ref: "User"
-    }]
+    }
 }, {
     timestamps: true,
     autoCreate: true

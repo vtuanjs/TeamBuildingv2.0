@@ -17,6 +17,7 @@ app.use('/user', require('./api/routes/user.route'))
 app.use('/auth', require('./api/routes/auth.route'))
 app.use('/project', require('./api/routes/project.route'))
 app.use('/job', require('./api/routes/job.route'))
+app.use('/comment', require('./api/routes/comment.route'))
 app.use('/notify', require('./api/routes/notify.route'))
 
 app.use(function (_req, res, next) {

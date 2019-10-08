@@ -28,13 +28,13 @@ module.exports.getNotify = async (req, res, next) => {
     const signedUser = req.user
     try {
         const query = queryFindNotify(signedUser._id, isAction)
-        const notify = await Notify.find(query)
-        if (!notify) {
-            throw 'Can not fin notify'
+        const notifies = await Notify.find(query)
+        if (notifies.length === 0) {
+            throw 'Can not any notify'
         }
 
         return res.json({
-            notify
+            notifies
         })
     } catch (error) {
         next(error)

@@ -8,13 +8,17 @@ router.post("/", authentication.required, checkPermit({
     model: 'project',
     role: 'admin',
     source: 'query'
+}, {
+    model: 'project',
+    role: 'user',
+    source: 'query'
 }), job.postJob)
 
 router.post("/sub-job", authentication.required, checkPermit({
     model: 'job',
     role: 'user',
     source: 'query'
-}) ,job.postSubJob)
+}), job.postSubJob)
 
 router.get("/", authentication.required, checkPermit({
     model: 'project',

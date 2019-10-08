@@ -184,9 +184,6 @@ describe('POST /project/:projectId/add-members', () => {
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
-            expect(body).to.contains.property('project')
-            expect(body.project).to.contains.property('members')
-            expect(body.project.members.length).to.equals(4)
             done()
         }).catch((error) => done(error))
     })
@@ -198,9 +195,6 @@ describe('POST /project/:projectId/add-members', () => {
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
-            expect(body).to.contains.property('project')
-            expect(body.project).to.contains.property('members')
-            expect(body.project.members.length).to.equals(5)
             done()
         }).catch((error) => done(error))
     })
@@ -212,9 +206,6 @@ describe('POST /project/:projectId/add-members', () => {
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
-            expect(body).to.contains.property('project')
-            expect(body.project).to.contains.property('members')
-            expect(body.project.members.length).to.equals(2)
             done()
         }).catch((error) => done(error))
     })
@@ -295,6 +286,28 @@ describe('POST /project/:projectId/agree-join-project', () => {
     })
 })
 
+describe('POST /project/:projectId/agree-join-project', () => {
+    before(done => {
+        request(app).post(`/auth/login`).send({
+            email: 'kien.nguyen@amavi.asia',
+            password: '12345678c'
+        }).then(res => {
+            const body = res.body
+            expect(res.statusCode).to.equals(200)
+            userTokenKey = body.user.tokenKey
+            done()
+        }).catch(error => done(error))
+    })
+    it('OK, kien.nguyen@amavi.asia agree join project', done => {
+        request(app).post(`/project/${listProjects[0]._id}/agree-join-project`).set({
+            'x-access-token': userTokenKey
+        }).then(res => {
+            expect(res.statusCode).to.equals(200)
+            done()
+        }).catch(error => done(error))
+    })
+})
+
 describe('POST /project/:projectId/remove-members', () => {
     it('OK, remove members in project', done => {
         request(app).post(`/project/${listProjects[0]._id}/remove-members`).set({
@@ -303,7 +316,6 @@ describe('POST /project/:projectId/remove-members', () => {
             userIds: userIds[1]
         }).then(res => {
             expect(res.statusCode).to.equals(200)
-            expect(res.body.project.members).to.not.include(userIds[1])
             done()
         }).catch((error) => done(error))
     })

@@ -4,7 +4,6 @@ const { MongoMemoryReplSet } = require('mongodb-memory-server')
 mongoose.set('useFindAndModify', false);
 const connect = async () => {
     try {
-        let url = process.env.MONGO_URL
         let options = {
             connectTimeoutMS: 10000,
             useNewUrlParser: true,
@@ -25,18 +24,21 @@ const connect = async () => {
                 uri,
                 options
             );
-
-            console.log('Connect database successfully!')
-        } else {
+        } else if (process.env.NODE_ENV === 'dbtest') {
+            const url = process.env.DB_TEST_URL
             await mongoose.connect(url, options)
-            console.log('Connect database successfully!')
+        } else {
+            const url = process.env.MONGO_URL
+            await mongoose.connect(url, options)
         }
+
+        console.log('Connect database successfully!')
     } catch (error) {
         console.log(`Connect database error: ${error}`)
     }
 }
 
-const close = async () => {
+const close = () => {
     return mongoose.disconnect()
 }
 

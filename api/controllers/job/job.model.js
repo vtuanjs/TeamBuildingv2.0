@@ -23,7 +23,7 @@ const JobSchema = new Schema({
         type: Number,
         default: 0
     },
-    members: [{
+    author: [{
         type: ObjectId,
         ref: "User"
     }],

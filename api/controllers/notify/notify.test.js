@@ -27,9 +27,8 @@ describe('GET /notify', () => {
             'x-access-token': signedUser.tokenKey
         }).then(res => {
             const body = res.body
-            console.log(body)
             expect(res.statusCode).to.equals(200)
-            expect(body).to.contain.property('notify')
+            expect(body).to.contain.property('notifies')
             done()
         }).catch((error) => done(error))
     })
