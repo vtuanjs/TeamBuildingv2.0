@@ -128,10 +128,22 @@ describe('GET /comment/:commentId', () => {
 })
 
 describe('PUT /comment/:commentId', () => {
-    it('OK, edit comment comment', done => {
+    it('OK, edit comment', done => {
         request(app).put(`/comment/${listComments[0]._id}`)
             .set({ 'x-access-token': ownerCommentTokenKey })
             .send({body: 'Comment Edited'})
+            .then(res => {
+                const body = res.body
+                expect(res.statusCode).to.equals(200)
+                expect(body).to.contain.property('comment')
+                done()
+            })
+            .catch((error) => done(error))
+    })
+    it('OK, edit comment again', done => {
+        request(app).put(`/comment/${listComments[0]._id}`)
+            .set({ 'x-access-token': ownerCommentTokenKey })
+            .send({body: 'Comment Edited Again'})
             .then(res => {
                 const body = res.body
                 expect(res.statusCode).to.equals(200)
@@ -144,10 +156,9 @@ describe('PUT /comment/:commentId', () => {
 
 describe('DELETE /comment/:commentId', () => {
     it('OK, delete comment comment', done => {
-        request(app).delete(`/comment/${listComments[0]._id}`)
+        request(app).delete(`/comment/${listComments[1]._id}`)
             .set({ 'x-access-token': ownerCommentTokenKey })
             .then(res => {
-                const body = res.body
                 expect(res.statusCode).to.equals(200)
                 done()
             })

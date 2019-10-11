@@ -23,10 +23,10 @@ const JobSchema = new Schema({
         type: Number,
         default: 0
     },
-    author: [{
+    author: {
         type: ObjectId,
         ref: "User"
-    }],
+    },
     allowed: {
         isAllowMemberAddMember: {
             type: Number,
