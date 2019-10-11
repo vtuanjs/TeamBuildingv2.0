@@ -497,6 +497,28 @@ module.exports.removeMembers = async (req, res, next) => {
     }
 }
 
+module.exports.leaveProject = async (req, res, next) => {
+    const { projectId } = req.params
+    const signedUser = req.user
+    try {
+        await User.updateOne({
+            _id: signedUser._id
+        }, {
+            $unset: {
+                projects: {
+                    _id: projectId
+                }
+            }
+        })
+
+        return res.json({
+            message: `Leave project successfully!`,
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
 module.exports.changeUserRole = async (req, res, next) => {
     const projectId = req.params.projectId
     const {

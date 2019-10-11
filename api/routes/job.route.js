@@ -56,17 +56,17 @@ router.delete("/:jobId", authentication.required, checkPermit({
     source: "params"
 }), job.deleteImmediately)
 
-router.post("/:jobId/stored", authentication.required, checkPermit({
+router.post("/:jobId/completed", authentication.required, checkPermit({
     model: "job",
     role: "owner",
     source: "params"
-}), job.storedJob)
+}), job.completedJob)
 
-router.post("/:jobId/undoStored", authentication.required, checkPermit({
+router.post("/:jobId/undoCompleted", authentication.required, checkPermit({
     model: "job",
     role: "owner",
     source: "params"
-}), job.undoStoredJob)
+}), job.undoCompletedJob)
 
 router.put("/:jobId", authentication.required, checkPermit({
     model: "job",
@@ -89,6 +89,8 @@ router.post("/:jobId/remove-members", authentication.required, checkPermit({
 router.post("/:jobId/agree-join-job", authentication.required, job.agreeJoinJob)
 
 router.post("/:jobId/disagree-join-job", authentication.required, job.disAgreeJoinJob)
+
+router.post("/:jobId/leave-job", authentication.required, job.leaveJob)
 
 router.post("/:jobId/change-user-role", authentication.required, checkPermit({
     model: "job",

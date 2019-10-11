@@ -22,10 +22,12 @@ module.exports.postUser = async (req, res, next) => {
             throw "Password must be eight characters or longer, must contain at least 1 numeric character, 1 lowercase charater"
         }
 
+        const encryptedPwd = await encryptedPassword(password)
+
         const user = await User.create({
             name,
             email,
-            password: await encryptedPassword(password)
+            password: encryptedPwd
         })
 
         return res.json({
@@ -58,11 +60,13 @@ module.exports.postAdmin = async (req, res, next) => {
             throw "Password must be eight characters or longer, must contain at least 1 numeric character, 1 lowercase charater"
         }
 
+        const encryptedPwd = await encryptedPassword(password)
+
         const user = await User.create({
             name,
             email,
             role: "admin",
-            password: await encryptedPassword(password)
+            password: encryptedPwd
         })
 
         return res.json({
@@ -240,20 +244,6 @@ module.exports.getUser = async (req, res, next) => {
     try {
         const foundUser = await User.findById(userId)
             .select("-password -isActive -isBanned")
-            .populate([
-                // {
-                //     path: "jobs.id",
-                //     select: "title"
-                // },
-                // {
-                //     path: "teams.id",
-                //     select: "name"
-                // },
-                // {
-                //     path: "comments",
-                //     select: "body comentOn"
-                // }
-            ])
 
         if (!foundUser) throw "User is not exist"
 

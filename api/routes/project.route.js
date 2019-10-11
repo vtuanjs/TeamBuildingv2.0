@@ -65,6 +65,8 @@ router.post("/:projectId/agree-join-project", authentication.required, project.a
 
 router.post("/:projectId/disagree-join-project", authentication.required, project.disAgreeJoinProject)
 
+router.post("/:projectId/leave-project", authentication.required, project.leaveProject)
+
 router.post("/:projectId/change-user-role", authentication.required, checkPermit({
     model: "project",
     role: "owner",

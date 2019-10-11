@@ -226,7 +226,7 @@ describe('POST /project/:projectId/add-members', () => {
             userIds: '5d9468959767571303701cf8'
         }).then(res => {
             expect(res.statusCode).to.satisfy(status => {
-                if (status === 400 || status === 403){
+                if (status === 400 || status === 403) {
                     return true
                 }
             })
@@ -368,7 +368,7 @@ describe('DELETE /project/:projectId', () => {
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.satisfy(status => {
-                if (status === 400 || status === 403){
+                if (status === 400 || status === 403) {
                     return true
                 }
             })
@@ -413,5 +413,27 @@ describe('POST /project/:projectId/change-user-role', () => {
             expect(res.statusCode).to.equals(200)
             done()
         }).catch((error) => done(error))
+    })
+})
+
+describe('POST /project/:projectId/leave-project', () => {
+    before(done => {
+        request(app).post(`/auth/login`).send({
+            email: 'ngocancsdl@gmail.com',
+            password: '12345678d'
+        }).then(res => {
+            const body = res.body
+            expect(res.statusCode).to.equals(200)
+            userTokenKey = body.user.tokenKey
+            done()
+        }).catch(error => done(error))
+    })
+    it('OK, leave project', done => {
+        request(app).post(`/project/${listProjects[0]._id}/leave-project`).set({
+            'x-access-token': userTokenKey
+        }).then(res => {
+            expect(res.statusCode).to.equals(200)
+            done()
+        }).catch(error => done(error))
     })
 })

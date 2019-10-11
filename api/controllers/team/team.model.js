@@ -6,6 +6,23 @@ const TeamSchema = new Schema({
     name: {
         type: String,
         required: true
+    },
+    description: {
+        type: String
+    },
+    author: {
+        type: ObjectId,
+        ref: 'User'
+    },
+    isPublic: {
+        type: Number,
+        default: 1
+    },
+    allowed: {
+        isAllowMemberAddMember: {
+            type: Number,
+            default: 1
+        }
     }
 }, {
     timestamps: true,

@@ -12,13 +12,14 @@ app.set('view engine', 'pug')
 app.set('views', './views')
 app.use(cookieParser())
 
-// app.use('/', require('./api/routes/index.route'))
+app.use('/', require('./api/routes/index.route'))
 app.use('/user', require('./api/routes/user.route'))
 app.use('/auth', require('./api/routes/auth.route'))
 app.use('/project', require('./api/routes/project.route'))
 app.use('/job', require('./api/routes/job.route'))
 app.use('/comment', require('./api/routes/comment.route'))
 app.use('/notify', require('./api/routes/notify.route'))
+app.use('/team', require('./api/routes/team.route'))
 
 app.use(function (_req, res, next) {
     res.header("Access-Control-Allow-Origin", ALLOW_ACCESS_IP);

@@ -7,7 +7,7 @@
     "start": "nodemon index.js",
     "debug": "node --inspect index.js",
     "test": "NODE_ENV=test mocha --no-deprecation --timeout 60000 --recursive --exit",
-    "debug-test": "NODE_ENV=test mocha --no-deprecation --timeout 60000 --inspect-brk --recursive --exit",
+    "debugtest": "NODE_ENV=test mocha --no-deprecation --timeout 60000 --inspect-brk --recursive --exit",
     "dbtest": "NODE_ENV=dbtest mocha --no-deprecation --timeout 60000 --recursive --exit"
   },
   "author": "Nguyen Van Tuan",

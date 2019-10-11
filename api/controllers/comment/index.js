@@ -26,7 +26,7 @@ module.exports.deleteComment = async (req, res, next) => {
             author: signedUser._id
         })
 
-        if (raw.ok != 1){
+        if (raw.ok != 1) {
             throw 'Can not delete this comment'
         }
 
@@ -46,20 +46,15 @@ module.exports.updateComment = async (req, res, next) => {
             author: signedUser._id
         })
 
-        if (!comment){
+        if (!comment) {
             throw 'Comment not exitsts or you do not permistion'
         }
 
-        comment = {
-            ...comment,
-            body,
-            edited: [
-                ...comment.edited, {
-                    body: comment.body,
-                    date: comment.date
-                }
-            ]
-        }
+        comment.edited.push({
+            body: comment.body,
+            createdAt: comment.updatedAt
+        })
+        comment.body = body
 
         await comment.save()
 

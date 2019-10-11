@@ -246,29 +246,29 @@ describe('POST /job/:jobId/restore', () => {
     })
 })
 
-describe('POST /job/:jobId/stored', () => {
-    it('OK, stored job', done => {
-        request(app).post(`/job/${listJobs[0]._id}/stored`).set({
+describe('POST /job/:jobId/completed', () => {
+    it('OK, completed job', done => {
+        request(app).post(`/job/${listJobs[0]._id}/completed`).set({
             'x-access-token': ownerJobTokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
             expect(body).to.contain.property('job')
-            expect(body.job.isStored).to.equals(1)
+            expect(body.job.isCompleted).to.equals(1)
             done()
         }).catch((error) => done(error))
     })
 })
 
-describe('POST /job/:jobId/undoStored', () => {
-    it('OK, undo stored job', done => {
-        request(app).post(`/job/${listJobs[0]._id}/undoStored`).set({
+describe('POST /job/:jobId/undoCompleted', () => {
+    it('OK, undo completed job', done => {
+        request(app).post(`/job/${listJobs[0]._id}/undoCompleted`).set({
             'x-access-token': ownerJobTokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
             expect(body).to.contain.property('job')
-            expect(body.job.isStored).to.equals(0)
+            expect(body.job.isCompleted).to.equals(0)
             done()
         }).catch((error) => done(error))
     })
@@ -429,5 +429,27 @@ describe('POST /job/:jobId/change-user-role', () => {
             expect(res.statusCode).to.equals(200)
             done()
         }).catch((error) => done(error))
+    })
+})
+
+describe('POST /job/:jobId/leave-job', () => {
+    before(done => {
+        request(app).post(`/auth/login`).send({
+            email: 'ngocancsdl@gmail.com',
+            password: '12345678d'
+        }).then(res => {
+            const body = res.body
+            expect(res.statusCode).to.equals(200)
+            userTokenKey = body.user.tokenKey
+            done()
+        }).catch(error => done(error))
+    })
+    it('OK, leave job', done => {
+        request(app).post(`/job/${listJobs[0]._id}/leave-job`).set({
+            'x-access-token': userTokenKey
+        }).then(res => {
+            expect(res.statusCode).to.equals(200)
+            done()
+        }).catch(error => done(error))
     })
 })

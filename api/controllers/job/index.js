@@ -120,16 +120,16 @@ const filterJob = (query, filter) => {
     if (!filter) {
         return {
             ...query,
-            isStored: 0,
+            isCompleted: 0,
             isDeleted: 0
         }
     }
 
     switch (filter) {
-        case 'isStored':
+        case 'isCompleted':
             query = {
                 ...query,
-                isStored: 1
+                isCompleted: 1
             }
             break
         case 'isDeleted':
@@ -225,8 +225,8 @@ const setJobStatus = ({ jobId, status, value }) => {
         case 'isDeleted':
             queryUpdate = { isDeleted: value }
             break
-        case 'isStored':
-            queryUpdate = { isStored: value }
+        case 'isCompleted':
+            queryUpdate = { isCompleted: value }
             break
         default:
             break
@@ -237,7 +237,7 @@ const setJobStatus = ({ jobId, status, value }) => {
         upsert: true,
         new: true
     }
-    ).select('title isDeleted isStored')
+    ).select('title isDeleted isCompleted')
 }
 
 module.exports.deleteJob = async (req, res, next) => {
@@ -289,19 +289,19 @@ module.exports.deleteImmediately = async (req, res, next) => {
     }
 }
 
-module.exports.storedJob = async (req, res, next) => {
+module.exports.completedJob = async (req, res, next) => {
     const jobId = req.params.jobId
     try {
         const job = await setJobStatus({
             jobId,
-            status: 'isStored',
+            status: 'isCompleted',
             value: 1
         })
 
         if (!job) throw "Can not find job"
 
         return res.json({
-            message: `Stored job ${job.title} successfully!`,
+            message: `Completed job ${job.title} successfully!`,
             job
         })
     } catch (error) {
@@ -309,19 +309,19 @@ module.exports.storedJob = async (req, res, next) => {
     }
 }
 
-module.exports.undoStoredJob = async (req, res, next) => {
+module.exports.undoCompletedJob = async (req, res, next) => {
     const jobId = req.params.jobId
     try {
         const job = await setJobStatus({
             jobId,
-            status: 'isStored',
+            status: 'isCompleted',
             value: 0
         })
 
         if (!job) throw "Can not find job"
 
         return res.json({
-            message: `Undo Stored job successfully!`,
+            message: `Undo Completed job successfully!`,
             job
         })
     } catch (error) {
@@ -610,6 +610,28 @@ module.exports.removeMembers = async (req, res, next) => {
             message: `Remove member successfully!`
         })
 
+    } catch (error) {
+        next(error)
+    }
+}
+
+module.exports.leaveJob = async (req, res, next) => {
+    const { jobId } = req.params
+    const signedUser = req.user
+    try {
+        await User.updateOne({
+            _id: signedUser._id
+        }, {
+            $unset: {
+                jobs: {
+                    _id: jobId
+                }
+            }
+        })
+
+        return res.json({
+            message: `Leave project successfully!`,
+        })
     } catch (error) {
         next(error)
     }

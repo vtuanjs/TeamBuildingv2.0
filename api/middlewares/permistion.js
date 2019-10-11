@@ -6,118 +6,102 @@ const shouldIsSelfUser = (userIdSelf, userIdCompare, allowed) => {
     return isAllowed('self', allowed) && userIdCompare && userIdSelf.equals(userIdCompare)
 }
 
-const isInUser = (allowed) => {
+const pushAdminRole = (allowed) => {
+    if (allowed.indexOf("admin") > -1) {
+        allowed += ' owner'
+    }
     if (allowed.indexOf("user") > -1 || allowed.indexOf("self") > -1) {
-        allowed += ' admin'
+        allowed += ' admin owner'
     }
 
+    return allowed
+}
+
+const isInUser = (allowed) => {
+    allowed = pushAdminRole(allowed)
+
     return (req) => {
-        if (shouldIsSelfUser(req.user._id, req.params.userId, allowed) || isAllowed(req.user.role, allowed)) {
+        if (shouldIsSelfUser(req.user._id, req.params.userId, allowed)
+            || isAllowed(req.user.role, allowed)) {
             return true
         }
         return false
     }
 }
 
-const findProjectIdFromSource = (req, source) => {
-    let projectId
-    switch (source) {
-        case "body":
-            projectId = req.body.projectId
-            break;
-        case "params":
-            projectId = req.params.projectId
-            break;
-        case "query":
-            projectId = req.query.projectId
-            break;
-        default:
-            return false
+const findParameterFromSource = (parameter, source) => {
+    return req => {
+        switch (source) {
+            case "body":
+                return req.body[parameter]
+            case "params":
+                return req.params[parameter]
+            case "query":
+                return req.query[parameter]
+            default:
+                return false
+        }
     }
-
-    return projectId
 }
 
-const shouldIsAllowedInProject = ({
-    user,
-    projectId,
-    allowed
-}) => {
-    return user && user.projects && user.projects.some(project => {
-        return project._id.equals(projectId) && isAllowed(project.role, allowed)
+const shouldIsAllowed = ({ user, propertyInUser, propertyIdCheck, allowed }) => {
+    allowed = pushAdminRole(allowed)
+
+    return user[propertyInUser].some(item => {
+        return item._id.equals(propertyIdCheck) && isAllowed(item.role, allowed)
     })
 }
 
 const isInProject = (allowed, source) => {
-    if (allowed.indexOf("admin") > -1) {
-        allowed += ' owner'
-    }
-    if (allowed.indexOf("user") > -1) {
-        allowed += ' admin owner'
-    }
-
     return (req) => {
         const signedUser = req.user
-        let projectId = findProjectIdFromSource(req, source)
+        let projectId = findParameterFromSource('projectId', source)(req)
 
         if (projectId) {
-            if (shouldIsAllowedInProject({
+            if (shouldIsAllowed({
                 user: signedUser,
-                projectId,
+                propertyInUser: 'projects',
+                propertyIdCheck: projectId,
                 allowed
-            }))
+            })) {
                 return true
+            }
         }
 
         return false
     }
 }
 
-const findJobIdFromSource = (req, source) => {
-    let jobId
-    switch (source) {
-        case "body":
-            jobId = req.body.jobId
-            break;
-        case "params":
-            jobId = req.params.jobId
-            break;
-        case "query":
-            jobId = req.query.jobId
-            break;
-        default:
-            return false
-    }
-
-    return jobId
-}
-
-const shouldIsAllowedInJob = ({
-    user,
-    jobId,
-    allowed
-}) => {
-    return user && user.jobs && user.jobs.some(job => {
-        return job._id.equals(jobId) && isAllowed(job.role, allowed)
-    })
-}
-
 const isInJob = (allowed, source) => {
-    if (allowed.indexOf("admin") > -1) {
-        allowed += ' owner'
-    }
-    if (allowed.indexOf("user") > -1) {
-        allowed += ' admin owner'
-    }
-
     return (req) => {
         const signedUser = req.user
-        let jobId = findJobIdFromSource(req, source)
+        let jobId = findParameterFromSource('jobId', source)(req)
 
         if (jobId) {
-            if (shouldIsAllowedInJob({
+            if (shouldIsAllowed({
                 user: signedUser,
-                jobId,
+                propertyInUser: 'jobs',
+                propertyIdCheck: jobId,
+                allowed
+            })) {
+                return true
+            }
+        }
+
+        return false
+    }
+}
+
+const isInTeam = (allowed, source) => {
+    return (req) => {
+        const signedUser = req.user
+        let teamId = findParameterFromSource('teamId', source)(req)
+
+        if (teamId) {
+            if (shouldIsAllowed({
+                user: signedUser,
+                propertyInUser: 'teams',
+                propertyIdCheck: teamId,
                 allowed
             })) {
                 return true
@@ -143,6 +127,8 @@ module.exports = checkPermit = (...checks) => {
                     if (isInProject(role, source)(req)) return next()
                 case 'job':
                     if (isInJob(role, source)(req)) return next()
+                case 'team':
+                    if (isInTeam(role, source)(req)) return next()
                 default:
                     break
             }

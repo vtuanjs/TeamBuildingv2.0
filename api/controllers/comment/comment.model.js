@@ -6,7 +6,8 @@ const CommentSchema = new Schema({
     body: {type: String, default: ""},
     edited: [{
         body: String,
-        date: Date
+        createdAt: Date,
+        _id: false
     }],
     author: { type: ObjectId, ref: "User" },
     commentOn: { type: ObjectId, ref: 'Job' },
