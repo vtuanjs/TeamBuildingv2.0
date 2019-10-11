@@ -19,12 +19,15 @@ Team Building là một phần mềm được viết ra nhằm quản lí tiến
 
 ### Huớng dẫn sử dụng
 1. Cài đặt
+```
 $ git clone https://github.com/vantuan1303/TeamBuildingv2.0.git
 $ cd TeamBuildingv2.0
 $ yarn
+```
 
 Khởi tạo file .env với các thông số sau:
 
+```
 MONGO_URL=mongodb://dbName:dbPass@localhost:27018/db?replicaSet=rs0
 DB_TEST_URL=mongodb://dbTestName:dbTestPass@localhost:27019/db?replicaSet=rs0
 PORT=3001
@@ -33,22 +36,30 @@ EMAIL_USER=yourEmail@gmail.com
 EMAIL_PASS=yourPass
 SECRET_STRING=secrectKey
 ACCESS_CONTROL_ORIGIN=*
+```
 
+```
 $ yarn start
+```
 
 2. Chạy test
 - Chạy test không cần database
+```
 $ yarn run test
+```
 - Chạy test qua database 
 Bạn cần mở database đã được khai báo tại DB_TEST_URL.
 $ yarn run dbtest
 - Chạy debug test
 Sử dụng Chrome Dev Team để test. Không cần mở DB_TEST
+```
 $ yarn run debugtest
+```
 
 ### Thông tin tác giả:
 
+```
 Tên: Nguyễn Văn Tuấn
 Email: vantuan130393@gmail.com
 Phone: 033 557 8022
-
+```
