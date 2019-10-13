@@ -2,10 +2,11 @@
 const expect = require('chai').expect
 const request = require('supertest')
 const app = require('../../../app')
+const redis = require('../../middlewares/redis')
 
-let ownerJobTokenKey = ''
+let owner
 let projectId = ''
-let userTokenKey = ''
+let member
 let listJobs = '' // Use to update, delete this company with Id
 let userIds // Array user will add to job
 let userId
@@ -20,27 +21,22 @@ describe('PREPARE TESTING JOB', () => {
             expect(res.statusCode).to.equals(200)
             expect(body).to.contain.property('user')
             expect(body.user).to.contain.property('tokenKey')
-            ownerJobTokenKey = body.user.tokenKey
+            owner = body.user
             done()
         }).catch((error) => done(error))
     })
     it('OK, get project Id', done => {
-        request(app).get('/project').set({
-            'x-access-token': ownerJobTokenKey
-        }).then(res => {
-            const body = res.body
-            expect(res.statusCode).to.equals(200)
-            expect(body).to.contain.property('projects')
-            projectId = body.projects[0]._id
+        redis.get('listProjects').then(data => {
+            projectId = JSON.parse(data)[0]._id
             done()
-        }).catch((error) => done(error))
+        }).catch(error => done(error))
     })
 })
 
 describe('POST /job?projectId=', () => {
     it('OK, create Job 1', done => {
         request(app).post(`/job?projectId=${projectId}`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             title: 'Job 1',
             description: 'Job 1 Description',
@@ -56,7 +52,7 @@ describe('POST /job?projectId=', () => {
     })
     it('OK, create Job 2', done => {
         request(app).post(`/job?projectId=${projectId}`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             title: 'Job 2',
             description: 'Job 2 Description'
@@ -71,7 +67,7 @@ describe('POST /job?projectId=', () => {
     })
     it('OK, create Job 3', done => {
         request(app).post(`/job?projectId=${projectId}`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             title: 'Job 3',
             description: 'Job 3 Description'
@@ -86,7 +82,7 @@ describe('POST /job?projectId=', () => {
     })
     it('OK, create Job 4', done => {
         request(app).post(`/job?projectId=${projectId}`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             title: 'Job 4',
             description: 'Job 4 Description'
@@ -101,7 +97,7 @@ describe('POST /job?projectId=', () => {
     })
     it('OK, create Job 5', done => {
         request(app).post(`/job?projectId=${projectId}`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             title: 'Job 5',
             description: 'Job 5 Description'
@@ -116,7 +112,7 @@ describe('POST /job?projectId=', () => {
     })
     it('FAIL, missing title', done => {
         request(app).post(`/job?projectId=${projectId}`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             description: 'Job FAIL Description'
         }).then(res => {
@@ -129,13 +125,15 @@ describe('POST /job?projectId=', () => {
 describe('GET /job', () => {
     it('OK, Query list of jobs', done => {
         request(app).get(`/job?projectId=${projectId}`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
             expect(body).to.contain.property('jobs')
             expect(body.jobs.length).to.equals(5)
             listJobs = body.jobs
+            // Save to redis store to re-use
+            redis.setex('listJobs', 3600, JSON.stringify(listJobs))
             done()
         }).catch((error) => done(error))
     })
@@ -144,7 +142,7 @@ describe('GET /job', () => {
 describe('GET /job/:jobId', () => {
     it('OK, Get detail job', done => {
         request(app).get(`/job/${listJobs[0]._id}`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
@@ -157,7 +155,7 @@ describe('GET /job/:jobId', () => {
 describe('POST /job?jobId=', () => {
     it('OK, create sub job 1', done => {
         request(app).post(`/job/sub-job?jobId=${listJobs[0]._id}`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             title: 'Sub Job 1',
             description: 'Sub Job 1 Description'
@@ -172,7 +170,7 @@ describe('POST /job?jobId=', () => {
     })
     it('OK, create sub job 2', done => {
         request(app).post(`/job/sub-job?jobId=${listJobs[0]._id}`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             title: 'Sub Job 2',
             description: 'Sub Job 2 Description'
@@ -187,7 +185,7 @@ describe('POST /job?jobId=', () => {
     })
     it('OK, create sub job 3', done => {
         request(app).post(`/job/sub-job?jobId=${listJobs[0]._id}`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             title: 'Sub Job 3',
             description: 'Sub Job 3 Description'
@@ -202,7 +200,7 @@ describe('POST /job?jobId=', () => {
     })
     it('OK, create sub job 4', done => {
         request(app).post(`/job/sub-job?jobId=${listJobs[0]._id}`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             title: 'Sub Job 4',
             description: 'Sub Job 4 Description'
@@ -220,7 +218,7 @@ describe('POST /job?jobId=', () => {
 describe('POST /job/:jobId/send-to-trash', () => {
     it('OK, send to trash job', done => {
         request(app).post(`/job/${listJobs[0]._id}/send-to-trash`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
@@ -235,7 +233,7 @@ describe('POST /job/:jobId/send-to-trash', () => {
 describe('POST /job/:jobId/restore', () => {
     it('OK, restore job', done => {
         request(app).post(`/job/${listJobs[0]._id}/restore`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
@@ -249,7 +247,7 @@ describe('POST /job/:jobId/restore', () => {
 describe('POST /job/:jobId/completed', () => {
     it('OK, completed job', done => {
         request(app).post(`/job/${listJobs[0]._id}/completed`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
@@ -263,7 +261,7 @@ describe('POST /job/:jobId/completed', () => {
 describe('POST /job/:jobId/undoCompleted', () => {
     it('OK, undo completed job', done => {
         request(app).post(`/job/${listJobs[0]._id}/undoCompleted`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
@@ -277,7 +275,7 @@ describe('POST /job/:jobId/undoCompleted', () => {
 describe('DELETE /job/:jobId', () => {
     it('OK, delete immediately job', done => {
         request(app).delete(`/job/${listJobs[4]._id}/`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
@@ -288,7 +286,7 @@ describe('DELETE /job/:jobId', () => {
     })
     it('OK, check job already deleted ?', done => {
         request(app).get(`/job/${listJobs[4]._id}`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(403)
@@ -301,7 +299,7 @@ describe('DELETE /job/:jobId', () => {
 describe('PUT /job/:jobId/', () => {
     it('OK, edit job', done => {
         request(app).put(`/job/${listJobs[0]._id}/`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             title: 'Job Edit',
             description: 'Description Edit',
@@ -320,10 +318,9 @@ describe('PUT /job/:jobId/', () => {
 
 describe('PREPARE ADD MEMBER TO JOB', () => {
     it('Get userIds will add to project', done => {
-        request(app).get('/user').then(res => {
-            const body = res.body
-            expect(res.statusCode).to.equals(200)
-            userIds = body.users.map(user => user._id).slice(0, 4)
+        // userIds cache from project
+        redis.get('userIds').then(data => {
+            userIds = JSON.parse(data)
             done()
         }).catch(error => done(error))
     })
@@ -341,18 +338,17 @@ describe('PREPARE ADD MEMBER TO JOB', () => {
 describe('POST /job/:jobId/add-members', () => {
     it('OK, add list members to job', done => {
         request(app).post(`/job/${listJobs[2]._id}/add-members`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             userIds
         }).then(res => {
-            const body = res.body
             expect(res.statusCode).to.equals(200)
             done()
         }).catch((error) => done(error))
     })
     it('OK, add single member to job', done => {
         request(app).post(`/job/${listJobs[0]._id}/add-members`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             userIds: userId
         }).then(res => {
@@ -363,7 +359,7 @@ describe('POST /job/:jobId/add-members', () => {
     })
     it('OK, add single member to job', done => {
         request(app).post(`/job/${listJobs[1]._id}/add-members`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             userIds: userId
         }).then(res => {
@@ -382,13 +378,13 @@ describe('POST /job/:jobId/agree-join-job', () => {
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
-            userTokenKey = body.user.tokenKey
+            member = body.user
             done()
         }).catch(error => done(error))
     })
     it('OK, agree join job', done => {
         request(app).post(`/job/${listJobs[0]._id}/agree-join-job`).set({
-            'x-access-token': userTokenKey
+            'x-access-token': member.tokenKey
         }).then(res => {
             expect(res.statusCode).to.equals(200)
             done()
@@ -396,7 +392,7 @@ describe('POST /job/:jobId/agree-join-job', () => {
     })
     it('OK, disagree join job', done => {
         request(app).post(`/job/${listJobs[1]._id}/disagree-join-job`).set({
-            'x-access-token': userTokenKey
+            'x-access-token': member.tokenKey
         }).then(res => {
             expect(res.statusCode).to.equals(200)
             done()
@@ -407,7 +403,7 @@ describe('POST /job/:jobId/agree-join-job', () => {
 describe('POST /job/:jobId/remove-members', () => {
     it('OK, remove members in job', done => {
         request(app).post(`/job/${listJobs[0]._id}/remove-members`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             userIds: userIds[1]
         }).then(res => {
@@ -420,7 +416,7 @@ describe('POST /job/:jobId/remove-members', () => {
 describe('POST /job/:jobId/change-user-role', () => {
     it('OK, change user role', done => {
         request(app).post(`/job/${listJobs[0]._id}/change-user-role`).set({
-            'x-access-token': ownerJobTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             userId: userId,
             role: 'admin'
@@ -440,13 +436,13 @@ describe('POST /job/:jobId/leave-job', () => {
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
-            userTokenKey = body.user.tokenKey
+            member = body.user
             done()
         }).catch(error => done(error))
     })
     it('OK, leave job', done => {
         request(app).post(`/job/${listJobs[0]._id}/leave-job`).set({
-            'x-access-token': userTokenKey
+            'x-access-token': member.tokenKey
         }).then(res => {
             expect(res.statusCode).to.equals(200)
             done()

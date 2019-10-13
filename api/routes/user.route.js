@@ -3,6 +3,7 @@ const router = express.Router()
 const user = require("../controllers/user")
 const authentication = require("../middlewares/auth")
 const checkPermit = require("../middlewares/permistion")
+const cache = require('../middlewares/caches')
 
 router.post("/", user.postUser)
 
@@ -20,7 +21,7 @@ router.post("/admin/:userIds/unlock", authentication.required, checkPermit({
 
 router.get("/", user.getUsers)
 
-router.get("/:userId", user.getUser)
+router.get("/:userId", cache.cacheUser, user.getUser)
 
 router.get("/get-by-email/:email", user.getByEmail)
 

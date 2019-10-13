@@ -3,6 +3,7 @@ const router = express.Router()
 const project = require("../controllers/project")
 const authentication = require("../middlewares/auth")
 const checkPermit = require("../middlewares/permistion")
+const cache = require('../middlewares/caches')
 
 router.post("/", authentication.required, project.postProject)
 
@@ -47,7 +48,7 @@ router.get("/:projectId", authentication.required, checkPermit({
     model: "project",
     role: "user",
     source: "params"
-}), project.getProject)
+}), cache.cacheProject, project.getProject)
 
 router.post("/:projectId/add-members", authentication.required, checkPermit({
     model: "project",

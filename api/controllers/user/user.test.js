@@ -3,9 +3,9 @@ const expect = require('chai').expect
 const request = require('supertest')
 const app = require('../../../app')
 
-let adminTokenKey = '' // Save token key after login
-let userTokenKey
-let listUsers = '' // Use to update, delete this userId
+let admin  // Save token key after login
+let user
+let listUsers // Use to update, delete this userId
 
 describe('POST /user', () => {
     it('OK, create new user with email dung.van@gmail.com', done => {
@@ -276,7 +276,7 @@ describe('POST /auth/login', () => {
             expect(res.statusCode).to.equals(200)
             expect(body).to.contain.property('user')
             expect(body.user).to.contain.property('tokenKey')
-            adminTokenKey = body.user.tokenKey
+            admin = body.user
             // Save token key to global variable and use it in other test
             done()
         }).catch((error) => done(error))
@@ -290,7 +290,7 @@ describe('POST /auth/login', () => {
             expect(res.statusCode).to.equals(200)
             expect(body).to.contain.property('user')
             expect(body.user).to.contain.property('tokenKey')
-            userTokenKey = body.user.tokenKey
+            user = body.user
             // Save token key to global variable and use it in other test
             done()
         }).catch((error) => done(error))
@@ -300,7 +300,7 @@ describe('POST /auth/login', () => {
 describe('POST /user/admin/:userIds/block', () => {
     it('OK, block user by admin', done => {
         request(app).post(`/user/admin/${listUsers[0]._id}/block`).set({
-            "x-access-token": adminTokenKey
+            "x-access-token": admin.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
@@ -311,7 +311,7 @@ describe('POST /user/admin/:userIds/block', () => {
     })
     it('FAIL, user not permistion', done => {
         request(app).post(`/user/admin/${listUsers[1]._id}/block`).set({
-            "x-access-token": userTokenKey
+            "x-access-token": user.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(403)
@@ -324,7 +324,7 @@ describe('POST /user/admin/:userIds/block', () => {
 describe('POST /user/admin/:userIds/unlock', () => {
     it('OK, unlock user by admin', done => {
         request(app).post(`/user/admin/${listUsers[0]._id}/unlock`).set({
-            "x-access-token": adminTokenKey
+            "x-access-token": admin.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
@@ -335,7 +335,7 @@ describe('POST /user/admin/:userIds/unlock', () => {
     })
     it('FAIL, user not permistion', done => {
         request(app).post(`/user/admin/${listUsers[1]._id}/unlock`).set({
-            "x-access-token": userTokenKey
+            "x-access-token": user.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(403)
@@ -348,7 +348,7 @@ describe('POST /user/admin/:userIds/unlock', () => {
 describe('PUT /user/:userId', () => {
     it('OK, update user by admin', done => {
         request(app).put(`/user/${listUsers[0]._id}`).set({
-            "x-access-token": adminTokenKey
+            "x-access-token": admin.tokenKey
         }).send({
             name: 'Smith',
             gender: 'male',
@@ -367,7 +367,7 @@ describe('PUT /user/:userId', () => {
     })
     it('OK, update user with change password', done => {
         request(app).put(`/user/${listUsers[0]._id}`).set({
-            "x-access-token": adminTokenKey
+            "x-access-token": admin.tokenKey
         }).send({
             name: 'Smith',
             gender: 'male',
@@ -388,7 +388,7 @@ describe('PUT /user/:userId', () => {
     })
     it('FAIL, update user wrong old password', done => {
         request(app).put(`/user/${listUsers[0]._id}`).set({
-            "x-access-token": adminTokenKey
+            "x-access-token": admin.tokenKey
         }).send({
             name: 'Smith',
             gender: 'male',
@@ -403,7 +403,7 @@ describe('PUT /user/:userId', () => {
     })
     it('FAIL, user not permistion', done => {
         request(app).put(`/user/${listUsers[0]._id}`).set({
-            "x-access-token": userTokenKey
+            "x-access-token": user.tokenKey
         }).send({
             name: 'Smith',
             gender: 'male',
@@ -419,7 +419,7 @@ describe('PUT /user/:userId', () => {
 describe('DELETE /user/admin/:userIds/', () => {
     it('OK, delete user by admin', done => {
         request(app).delete(`/user/admin/${listUsers[0]._id}/`).set({
-            "x-access-token": adminTokenKey
+            "x-access-token": admin.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
@@ -430,7 +430,7 @@ describe('DELETE /user/admin/:userIds/', () => {
     })
     it('FAIL, user not permistion', done => {
         request(app).delete(`/user/admin/${listUsers[0]._id}/`).set({
-            "x-access-token": userTokenKey
+            "x-access-token": user.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(403)

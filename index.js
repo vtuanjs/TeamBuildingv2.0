@@ -27,3 +27,8 @@ database.connect()
     console.log(`Running on: ${HOST}:${PORT}`)
 })
 
+process.on('SIGTERM', () => {
+    shutdownManager.terminate(() => {
+      console.log('Server is gracefully terminated');
+    });
+  })

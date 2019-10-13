@@ -1,6 +1,7 @@
 const User = require('../user/user.model')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const redis = require('../../middlewares/redis')
 const secretString = process.env.SECRET_STRING
 
 module.exports.login = async (req, res, next) => {
@@ -51,4 +52,11 @@ module.exports.login = async (req, res, next) => {
             message: `Unauthorized ${error}`
         })
     }
+}
+
+module.exports.logout = (_req, res) => {
+    redis.flushdb()
+    return res.json({
+        message: 'Logout success'
+    })
 }

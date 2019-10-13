@@ -47,7 +47,7 @@ const findParameterFromSource = (parameter, source) => {
 const shouldIsAllowed = ({ user, propertyInUser, propertyIdCheck, allowed }) => {
     allowed = pushAdminRole(allowed)
 
-    return user[propertyInUser].some(item => {
+    return user && user[propertyInUser] && user[propertyInUser].some(item => {
         return item._id.equals(propertyIdCheck) && isAllowed(item.role, allowed)
     })
 }

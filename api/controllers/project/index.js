@@ -3,6 +3,7 @@ const Project = require('./project.model')
 const User = require('../user/user.model')
 const Notify = require('../notify/notify.model')
 const mongoose = require('mongoose')
+const redis = require('../../middlewares/redis')
 const INVITE_JOIN_PROJECT = 'Invite Join Project'
 
 const pushProjectToUser = (projectId, user) => {
@@ -259,6 +260,8 @@ module.exports.getProject = async (req, res, next) => {
         const project = await Project.findById(projectId)
 
         if (!project) throw "Wrong project id"
+
+        redis.setex(projectId, 3600, JSON.stringify(project))
 
         return res.json({
             project

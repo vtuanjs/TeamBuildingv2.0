@@ -2,11 +2,12 @@
 const expect = require('chai').expect
 const request = require('supertest')
 const app = require('../../../app')
+const redis = require('../../middlewares/redis')
 
-let ownerTeamTokenKey = '' // Save token key after login
-let userTokenKey
+let owner// Save token key after login
+let member
 let listTeams
-let userIds = ''
+let userIds
 let userId
 
 describe('PREPARE TESTING TEAM', () => {
@@ -19,7 +20,7 @@ describe('PREPARE TESTING TEAM', () => {
             expect(res.statusCode).to.equals(200)
             expect(body).to.contain.property('user')
             expect(body.user).to.contain.property('tokenKey')
-            ownerTeamTokenKey = body.user.tokenKey
+            owner = body.user
             done()
         }).catch((error) => done(error))
     })
@@ -28,7 +29,7 @@ describe('PREPARE TESTING TEAM', () => {
 describe('POST /team', () => {
     it('OK, create team', done => {
         request(app).post('/team').set({
-            'x-access-token': ownerTeamTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             name: 'Team Secret',
             description: 'Team Secret Description'
@@ -41,7 +42,7 @@ describe('POST /team', () => {
     })
     it('OK, create team', done => {
         request(app).post('/team').set({
-            'x-access-token': ownerTeamTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             name: 'Team Director',
             description: 'Team Director Description'
@@ -54,7 +55,7 @@ describe('POST /team', () => {
     })
     it('OK, create team', done => {
         request(app).post('/team').set({
-            'x-access-token': ownerTeamTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             name: 'Team X'
         }).then(res => {
@@ -80,7 +81,7 @@ describe('GET /team', () => {
 describe('GET /team/get-by-user', () => {
     it('OK, get team', done => {
         request(app).get('/team/get-by-user').set({
-            'x-access-token': ownerTeamTokenKey
+            'x-access-token': owner.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
@@ -94,7 +95,7 @@ describe('GET /team/get-by-user', () => {
 describe('GET /team/:teamId', () => {
     it('OK, get detail team', done => {
         request(app).get(`/team/${listTeams[0]._id}`).set({
-            'x-access-token': ownerTeamTokenKey
+            'x-access-token': owner.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
@@ -107,7 +108,7 @@ describe('GET /team/:teamId', () => {
 describe('PUT /team/:teamId', () => {
     it('OK, update team', done => {
         request(app).put(`/team/${listTeams[0]._id}`).set({
-            'x-access-token': ownerTeamTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             name: 'Team Edit',
             description: 'Team Edit Description'
@@ -121,11 +122,10 @@ describe('PUT /team/:teamId', () => {
 })
 
 describe('PREPARE ADD MEMBER TO JOB', () => {
-    it('Get userIds will add to project', done => {
-        request(app).get('/user').then(res => {
-            const body = res.body
-            expect(res.statusCode).to.equals(200)
-            userIds = body.users.map(user => user._id).slice(0, 4)
+    it('Get userIds will add to team', done => {
+        // userIds cache from project
+        redis.get('userIds').then(data => {
+            userIds = JSON.parse(data)
             done()
         }).catch(error => done(error))
     })
@@ -143,7 +143,7 @@ describe('PREPARE ADD MEMBER TO JOB', () => {
 describe('POST /team/:teamId/add-members', () => {
     it('OK, add list members to team', done => {
         request(app).post(`/team/${listTeams[2]._id}/add-members`).set({
-            'x-access-token': ownerTeamTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             userIds
         }).then(res => {
@@ -155,7 +155,7 @@ describe('POST /team/:teamId/add-members', () => {
     })
     it('OK, add single member to team', done => {
         request(app).post(`/team/${listTeams[0]._id}/add-members`).set({
-            'x-access-token': ownerTeamTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             userIds: userId
         }).then(res => {
@@ -166,7 +166,7 @@ describe('POST /team/:teamId/add-members', () => {
     })
     it('OK, add single member to team', done => {
         request(app).post(`/team/${listTeams[1]._id}/add-members`).set({
-            'x-access-token': ownerTeamTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             userIds: userId
         }).then(res => {
@@ -185,13 +185,13 @@ describe('POST /team/:teamId/agree-join-team', () => {
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
-            userTokenKey = body.user.tokenKey
+            member = body.user
             done()
         }).catch(error => done(error))
     })
     it('OK, agree join team', done => {
         request(app).post(`/team/${listTeams[0]._id}/agree-join-team`).set({
-            'x-access-token': userTokenKey
+            'x-access-token': member.tokenKey
         }).then(res => {
             expect(res.statusCode).to.equals(200)
             done()
@@ -199,7 +199,7 @@ describe('POST /team/:teamId/agree-join-team', () => {
     })
     it('OK, disagree join team', done => {
         request(app).post(`/team/${listTeams[1]._id}/disagree-join-team`).set({
-            'x-access-token': userTokenKey
+            'x-access-token': member.tokenKey
         }).then(res => {
             expect(res.statusCode).to.equals(200)
             done()
@@ -210,7 +210,7 @@ describe('POST /team/:teamId/agree-join-team', () => {
 describe('POST /team/:teamId/remove-members', () => {
     it('OK, remove members in team', done => {
         request(app).post(`/team/${listTeams[0]._id}/remove-members`).set({
-            'x-access-token': ownerTeamTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             userIds: userIds[1]
         }).then(res => {
@@ -223,7 +223,7 @@ describe('POST /team/:teamId/remove-members', () => {
 describe('POST /team/:teamId/change-user-role', () => {
     it('OK, change user role', done => {
         request(app).post(`/team/${listTeams[0]._id}/change-user-role`).set({
-            'x-access-token': ownerTeamTokenKey
+            'x-access-token': owner.tokenKey
         }).send({
             userId: userId,
             role: 'admin'
@@ -243,13 +243,13 @@ describe('POST /team/:teamId/leave-team', () => {
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
-            userTokenKey = body.user.tokenKey
+            member = body.user
             done()
         }).catch(error => done(error))
     })
     it('OK, leave team', done => {
         request(app).post(`/team/${listTeams[0]._id}/leave-team`).set({
-            'x-access-token': userTokenKey
+            'x-access-token': member.tokenKey
         }).then(res => {
             expect(res.statusCode).to.equals(200)
             done()

@@ -23,7 +23,7 @@ const queryFindNotify = (userId, isAction) => {
     return query
 }
 
-module.exports.getNotify = async (req, res, next) => {
+module.exports.getNotifies = async (req, res, next) => {
     const { isAction } = req.query
     const signedUser = req.user
     try {

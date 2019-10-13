@@ -1,4 +1,5 @@
 const Comment = require('./comment.model')
+const redis = require('../../middlewares/redis')
 
 module.exports.postComment = async (req, res, next) => {
     const { body } = req.body
@@ -89,6 +90,8 @@ module.exports.getComment = async (req, res, next) => {
             .populate('author', 'name')
 
         if (!comment) throw "Wrong comment id"
+
+        redis.setex(commentId, 3600, JSON.stringify(comment))
 
         return res.json({ comment })
     } catch (error) {

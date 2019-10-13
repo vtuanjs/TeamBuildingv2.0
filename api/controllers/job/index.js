@@ -2,6 +2,7 @@ const Job = require('./job.model')
 const User = require('../user/user.model')
 const Notify = require('../notify/notify.model')
 const mongoose = require('mongoose')
+const redis = require('../../middlewares/redis')
 const INVITE_JOIN_JOB = 'Invite Join Job'
 
 const pushJobToUser = (jobId, user) => {
@@ -210,6 +211,8 @@ module.exports.getJob = async (req, res, next) => {
         const job = await Job.findById(jobId)
 
         if (!job) throw "Wrong job id"
+
+        redis.setex(jobId, 3600, JSON.stringify(job))
 
         return res.json({
             job
