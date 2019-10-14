@@ -3,7 +3,7 @@ const app = express()
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 require('dotenv').config()
-const { ALLOW_ACCESS_IP } = process.env
+const { ACCESS_CONTROL_ORIGIN } = process.env
 
 app.use(express.static('public'))
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -22,7 +22,7 @@ app.use('/notify', require('./api/routes/notify.route'))
 app.use('/team', require('./api/routes/team.route'))
 
 app.use(function (_req, res, next) {
-    res.header("Access-Control-Allow-Origin", ALLOW_ACCESS_IP);
+    res.header("Access-Control-Allow-Origin", ACCESS_CONTROL_ORIGIN)
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });

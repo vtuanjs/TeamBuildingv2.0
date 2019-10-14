@@ -15,20 +15,14 @@ const logger = winston.createLogger({
 })
 
 database.connect()
-.then(() => {
-    server.on('error', (error) => {
-        logger.log('error', error)
-    })
-    
-    server.listen(PORT, HOST, () => {
-        logger.log('info', `Server is starting at ${new Date()}`)
-    })
+    .then(() => {
+        server.on('error', (error) => {
+            logger.log('error', error)
+        })
 
-    console.log(`Running on: ${HOST}:${PORT}`)
-})
+        server.listen(PORT, HOST, () => {
+            logger.log('info', `Server is starting at ${new Date()}`)
+        })
 
-process.on('SIGTERM', () => {
-    shutdownManager.terminate(() => {
-      console.log('Server is gracefully terminated');
-    });
-  })
+        console.log(`Running on: ${HOST}:${PORT}`)
+    })
