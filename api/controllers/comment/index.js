@@ -31,6 +31,8 @@ module.exports.deleteComment = async (req, res, next) => {
             throw 'Can not delete this comment'
         }
 
+        redis.del(commentId)
+
         return res.json({ message: "Delete comment successfully!", raw })
     } catch (error) {
         next(error)
@@ -57,7 +59,10 @@ module.exports.updateComment = async (req, res, next) => {
         })
         comment.body = body
 
-        await comment.save()
+        await Promise.all([
+            comment.save(),
+            redis.setex(commentId, 3600, JSON.stringify(comment))
+        ])
 
         return res.json({ message: `Update comment successfully!`, comment })
     } catch (error) {
@@ -84,16 +89,21 @@ module.exports.getComments = async (req, res, next) => {
 
 module.exports.getComment = async (req, res, next) => {
     const { commentId } = req.params
-
     try {
-        const comment = await Comment.findById(commentId)
-            .populate('author', 'name')
+        const store = await redis.get(commentId)
 
-        if (!comment) throw "Wrong comment id"
+        if (store) {
+            return res.json({ comment: JSON.parse(store) })
+        } else {
+            const comment = await Comment.findById(commentId)
+                .populate('author', 'name')
 
-        redis.setex(commentId, 3600, JSON.stringify(comment))
+            if (!comment) throw "Wrong comment id"
 
-        return res.json({ comment })
+            redis.setex(commentId, 3600, JSON.stringify(comment))
+
+            return res.json({ comment })
+        }
     } catch (error) {
         next(error)
     }

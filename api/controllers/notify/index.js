@@ -1,5 +1,4 @@
 const Notify = require('../notify/notify.model')
-const User = require('../user/user.model')
 
 const queryFindNotify = (userId, isAction) => {
     let query = {

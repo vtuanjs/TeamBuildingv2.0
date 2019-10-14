@@ -325,9 +325,9 @@ describe('POST /project/:projectId/remove-members', () => {
     })
 })
 
-describe('POST /project/:projectId/send-to-trash', () => {
+describe('POST /project/:projectId/delete', () => {
     it('OK, send to trash project', done => {
-        request(app).post(`/project/${listProjects[0]._id}/send-to-trash`).set({
+        request(app).post(`/project/${listProjects[0]._id}/delete`).set({
             'x-access-token': owner.tokenKey
         }).then(res => {
             const body = res.body

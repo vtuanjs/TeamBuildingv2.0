@@ -1,7 +1,6 @@
 'use strict'
 const bcrypt = require('bcrypt')
 const User = require('./user.model')
-const redis = require('../../middlewares/redis')
 
 const validatePassword = (password) => {
     const pwdRegex = new RegExp('^(?=.*[a-z])(?=.*[0-9])(?=.{8,})')
@@ -129,10 +128,7 @@ module.exports.updateUser = async (req, res, next) => {
 
         Object.assign(user, query)
 
-        await Promise.all([
-            user.save(),
-            redis.del(userId)
-        ])
+        await user.save()
 
         return res.json({
             message: `Update user with ID: ${user._id} succesfully!`,
@@ -171,10 +167,7 @@ module.exports.blockUsers = async (req, res, next) => {
     try {
         const arrayUserIds = getArrayUsers(userIds)
 
-        const [raw,] = await Promise.all([
-            setIsBannedUsers(arrayUserIds, 1),
-            redis.del(userIds)
-        ])
+        const raw = await setIsBannedUsers(arrayUserIds, 1)
 
         return res.json({
             message: "Block users successfully!",
@@ -192,10 +185,7 @@ module.exports.unlockUsers = async (req, res, next) => {
     try {
         const arrayUserIds = getArrayUsers(userIds)
 
-        const [raw,] = await Promise.all([
-            setIsBannedUsers(arrayUserIds, 0),
-            redis.del(userIds)
-        ])
+        const raw = await setIsBannedUsers(arrayUserIds, 0)
 
         return res.json({
             message: "Unlock users successfully!",
@@ -211,16 +201,12 @@ module.exports.deleteUser = async (req, res, next) => {
         userId
     } = req.params
     try {
-        const [raw,] = await Promise.all([
-            User.deleteOne({
-                _id: userId,
-                role: {
-                    $ne: 'admin'
-                }
-            }),
-
-            redis.del(userId)
-        ])
+        const raw = await User.deleteOne({
+            _id: userId,
+            role: {
+                $ne: 'admin'
+            }
+        })
 
         return res.json({
             message: "Delete user successfully!",
@@ -246,8 +232,6 @@ module.exports.getByEmail = async (req, res, next) => {
 
         if (!foundUser) throw "Can not find user with email"
 
-        await redis.setex(email, 3600, JSON.stringify(foundUser))
-
         return res.json({
             user: foundUser
         })
@@ -263,8 +247,6 @@ module.exports.getUser = async (req, res, next) => {
             .select("-password")
 
         if (!foundUser) throw "User is not exist"
-
-        await redis.setex(userId, 3600, JSON.stringify(foundUser))
 
         return res.json({
             user: foundUser

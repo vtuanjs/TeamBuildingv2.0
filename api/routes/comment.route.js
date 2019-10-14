@@ -3,7 +3,6 @@ const router = express.Router()
 const comment = require("../controllers/comment")
 const authentication = require("../middlewares/auth")
 const checkPermit = require("../middlewares/permistion")
-const cache = require('../middlewares/caches')
 
 router.post('/',
     authentication.required, checkPermit({
@@ -35,7 +34,6 @@ router.get('/',
 
 router.get('/:commentId',
     authentication.required,
-    cache.cacheComment,
     comment.getComment
 )
 

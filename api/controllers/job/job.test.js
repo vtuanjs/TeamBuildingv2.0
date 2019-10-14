@@ -215,9 +215,9 @@ describe('POST /job?jobId=', () => {
     })
 })
 
-describe('POST /job/:jobId/send-to-trash', () => {
+describe('POST /job/:jobId/delete', () => {
     it('OK, send to trash job', done => {
-        request(app).post(`/job/${listJobs[0]._id}/send-to-trash`).set({
+        request(app).post(`/job/${listJobs[0]._id}/delete`).set({
             'x-access-token': owner.tokenKey
         }).then(res => {
             const body = res.body

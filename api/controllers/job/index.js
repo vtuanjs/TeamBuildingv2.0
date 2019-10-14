@@ -27,8 +27,7 @@ const pushJobToProjectOwner = (jobId, projectId) => {
                 isJoined: 1
             }
         }
-    }
-    )
+    })
 }
 
 module.exports.postJob = async (req, res, next) => {
@@ -65,18 +64,18 @@ module.exports.postJob = async (req, res, next) => {
 }
 
 const pushJobToParentJobOwner = (jobId, parentJobId) => {
-    return User.updateOne({ 
+    return User.updateOne({
         'jobs._id': parentJobId,
         'jobs.role': 'owner'
-    },{
-            $addToSet: {
-                jobs: {
-                    _id: jobId,
-                    role: 'owner',
-                    isJoined: 1
-                }
+    }, {
+        $addToSet: {
+            jobs: {
+                _id: jobId,
+                role: 'owner',
+                isJoined: 1
             }
         }
+    }
     )
 }
 
@@ -206,17 +205,22 @@ module.exports.getSubJobs = async (req, res, next) => {
 
 module.exports.getJob = async (req, res, next) => {
     const jobId = req.params.jobId
-
     try {
-        const job = await Job.findById(jobId)
+        const store = await redis.get(jobId)
 
-        if (!job) throw "Wrong job id"
+        if (store) {
+            res.json({ job: JSON.parse(store) })
+        } else {
+            const job = await Job.findById(jobId)
 
-        redis.setex(jobId, 3600, JSON.stringify(job))
+            if (!job) throw "Wrong job id"
 
-        return res.json({
-            job
-        })
+            redis.setex(jobId, 3600, JSON.stringify(job))
+
+            return res.json({
+                job
+            })
+        }
     } catch (error) {
         next(error)
     }
@@ -239,8 +243,10 @@ const setJobStatus = ({ jobId, status, value }) => {
         queryUpdate, {
         upsert: true,
         new: true
-    }
-    ).select('title isDeleted isCompleted')
+    }).then(job => {
+        redis.setex(jobId, 3600, JSON.stringify(job))
+        return job
+    })
 }
 
 module.exports.deleteJob = async (req, res, next) => {
@@ -282,6 +288,8 @@ module.exports.deleteImmediately = async (req, res, next) => {
         const raw = await Job.deleteOne({
             _id: jobId
         })
+
+        await redis.del(jobId)
 
         return res.json({
             message: "Delete job successfully!",
@@ -379,6 +387,8 @@ module.exports.updateJob = async (req, res, next) => {
             new: true
         }
         )
+
+        await redis.setex(jobId, 3600, JSON.stringify(job))
 
         if (!job) throw "Can not find job"
 

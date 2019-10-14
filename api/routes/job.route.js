@@ -3,7 +3,6 @@ const router = express.Router()
 const job = require("../controllers/job")
 const authentication = require("../middlewares/auth")
 const checkPermit = require("../middlewares/permistion")
-const cache = require('../middlewares/caches')
 
 router.post("/", authentication.required, checkPermit({
     model: 'project',
@@ -37,9 +36,9 @@ router.get("/:jobId", authentication.required, checkPermit({
     model: "job",
     role: "user",
     source: "params"
-}), cache.cacheJob, job.getJob)
+}), job.getJob)
 
-router.post("/:jobId/send-to-trash", authentication.required, checkPermit({
+router.post("/:jobId/delete", authentication.required, checkPermit({
     model: "job",
     role: "owner",
     source: "params"

@@ -66,8 +66,10 @@ const setProjectStatus = ({ projectId, status, value }) => {
         queryUpdate, {
         upsert: true,
         new: true
-    }
-    ).select('title isDeleted isStored')
+    }).then(project => {
+        redis.setex(projectId, 3600, JSON.stringify(project))
+        return project
+    })
 }
 
 module.exports.deleteProject = async (req, res, next) => {
@@ -117,6 +119,8 @@ module.exports.deleteImmediately = async (req, res, next) => {
         const raw = await Project.deleteOne({
             _id: projectId
         })
+
+        await redis.del(projectId)
 
         return res.json({
             message: "Delete project successfully!",
@@ -218,6 +222,8 @@ module.exports.updateProject = async (req, res, next) => {
 
         if (!project) throw "Can not find project"
 
+        await redis.setex(projectId, 3600, JSON.stringify(project))
+
         return res.json({
             message: `Update project successfully!`,
             project
@@ -255,17 +261,21 @@ module.exports.getProjects = async (req, res, next) => {
 
 module.exports.getProject = async (req, res, next) => {
     const projectId = req.params.projectId
-
     try {
-        const project = await Project.findById(projectId)
+        const store = await redis.get(projectId)
+        if (store) {
+            return res.json({ project: JSON.parse(store) })
+        } else {
+            const project = await Project.findById(projectId)
 
-        if (!project) throw "Wrong project id"
+            if (!project) throw "Wrong project id"
 
-        redis.setex(projectId, 3600, JSON.stringify(project))
+            redis.setex(projectId, 3600, JSON.stringify(project))
 
-        return res.json({
-            project
-        })
+            return res.json({
+                project
+            })
+        }
     } catch (error) {
         next(error)
     }
