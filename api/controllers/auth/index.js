@@ -53,10 +53,3 @@ module.exports.login = async (req, res, next) => {
         })
     }
 }
-
-module.exports.logout = (_req, res) => {
-    redis.flushdb()
-    return res.json({
-        message: 'Logout success'
-    })
-}
