@@ -67,51 +67,17 @@ $ yarn run debugtest
 
 #### USER
 
-##### POST
-- `/`
-```
-@param: body: { name, email, password}
-@return: user
-```
-- `/admin`
-```
-@param: body: { name, email, password}
-@return: user
-```
-- `/admin/:userIds/block`
-```
-@return: raw
-```
-- `/admin/:userIds/unlock`
-```
-@return: raw
-```
-##### GET
-- `/`
-```
-@return: users
-```
-- `/:userId`
-```
-@return: user
-```
-- `/get-by-email/:email`
-```
-@return: user
-```
-
-##### PUT
-- `/:userId`
-```
-@param: body: { name, email, password}
-@return: user
-```
-
-##### DELETE
-- `/admin/:userId`
-```
-@return: raw
-```
+| METHOD | API                    | PARAMS                          | RETURN |
+|--------|------------------------|---------------------------------|--------|
+| POST   | /                      | body: { name, email, password } | user   |
+|        | /admin                 | body: { name, email, password } | user   |
+|        | /admin/:userIds/block  |                                 | raw    |
+|        | /admin/:userIds/unlock |                                 | raw    |
+| GET    | /                      |                                 | users  |
+|        | /:userId               |                                 | user   |
+|        | /get-by-email/:email   |                                 | user   |
+| PUT    | /:userId               | body: { name, email, password } | user   |
+| DELETE | /admin/:userId         |                                 | raw    |
 
 #### PROJECT
 
@@ -317,6 +283,7 @@ $ yarn run debugtest
 ##### PUT
 - `/:teamId`
 ```
+@param: body: { name, description }
 @return: teams
 ```
 ##### DELETE
