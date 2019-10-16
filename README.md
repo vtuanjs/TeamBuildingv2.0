@@ -67,78 +67,37 @@ $ yarn run debugtest
 
 #### USER
 
-| METHOD | API                    | PARAMS                          | RETURN |
-|--------|------------------------|---------------------------------|--------|
-| POST   | /                      | body: { name, email, password } | user   |
-|        | /admin                 | body: { name, email, password } | user   |
-|        | /admin/:userIds/block  |                                 | raw    |
-|        | /admin/:userIds/unlock |                                 | raw    |
-| GET    | /                      |                                 | users  |
-|        | /:userId               |                                 | user   |
-|        | /get-by-email/:email   |                                 | user   |
-| PUT    | /:userId               | body: { name, email, password } | user   |
-| DELETE | /admin/:userId         |                                 | raw    |
+| METHOD | API                    | PARAMS                                              | RETURN |
+|--------|------------------------|-----------------------------------------------------|--------|
+| POST   | /                      | body: { name, email, password }                     | user   |
+|        | /admin                 | body: { name, email, password }                     | user   |
+|        | /admin/:userIds/block  | params: { userIds }                                 | raw    |
+|        | /admin/:userIds/unlock | params: { userIds }                                 | raw    |
+| GET    | /                      |                                                     | users  |
+|        | /:userId               | params: { userId }                                  | user   |
+|        | /get-by-email/:email   | params: { email}                                    | user   |
+| PUT    | /:userId               | body: { name, email, password }, params: { userId } | user   |
+| DELETE | /admin/:userId         | params: { userId }                                  | raw    |
 
 #### PROJECT
 
-##### POST
-- `/`
-```
-@param: body: { title, description, isAllowMemberAddMember }
-@return: project
-```
-- `/:projectId/delete`
-```
-@return: project
-```
-- `/:projectId/restore`
-```
-@return: project
-```
-- `/:projectId/stored`
-```
-@return: project
-```
-- `/:projectId/undoStored`
-```
-@return: project
-```
-- `/:projectId/add-members`
-```
-@param: body: { userIds }
-```
-- `/:projectId/remove-members`
-```
-@param: body: { userIds }
-```
-- `/:projectId/agree-join-project`
-- `/:projectId/disagree-join-project`
-- `/:projectId/leave-project`
-- `/:projectId/change-user-role`
-```
-@param: body: { userId, role }
-@return: user
-```
-##### GET
-- `/`
-```
-@return: projects
-```
-- `/:projectId`
-```
-@return: project
-```
-##### PUT
-- `/:projectId"`
-```
-@param: body: { title, description, isAllowMemberAddMember }
-@return: project
-```
-##### DELETE
-- `/:projectId`
-```
-@return: raw
-```
+| METHOD | API                               | PARAMS                                                                       | RETURN   |
+|--------|-----------------------------------|------------------------------------------------------------------------------|----------|
+| POST   | /                                 | body: { title, description, isAllowMemberAddMember }                         | project  |
+|        | /:projectId/delete                | params: { projectId }                                                        | project  |
+|        | /:projectId/restore               | params: { projectId }                                                        | project  |
+|        | /:projectId/stored                | params: { projectId }                                                        | project  |
+|        | /:projectId/undoStored            | params: { projectId }                                                        | project  |
+|        | /:projectId/add-members           | params: { projectId }, body: { userIds }                                     |          |
+|        | /:projectId/remove-members        | params: { projectId }, body: { userIds }                                     |          |
+|        | /:projectId/agree-join-project    | params: { projectId }                                                        |          |
+|        | /:projectId/disagree-join-project | params: { projectId }                                                        |          |
+|        | /:projectId/leave-project         | params: { projectId }                                                        |          |
+|        | /:projectId/change-user-role      | params: { projectId }, body: { userId, role }                                | user     |
+| GET    | /                                 |                                                                              | projects |
+|        | /:projectId                       | params: { projectId }                                                        | project  |
+| PUT    | /:projectId                       | params: { projectId },  body: { title, description, isAllowMemberAddMember } | project  |
+| DELETE | /:projectId                       | params: { projectId }                                                        | raw      |
 
 #### JOB
 ##### POST
