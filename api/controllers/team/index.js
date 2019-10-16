@@ -379,25 +379,23 @@ module.exports.changeUserRole = async (req, res, next) => {
     const teamId = req.params.teamId
     const { userId, role } = req.body
     try {
-        const user = await Promise.all([
-            User.findOneAndUpdate({
-                _id: userId
-            }, {
-                $set: {
-                    "teams.$[element].role": role
-                }
-            }, {
-                arrayFilters: [{
-                    'element._id': teamId
-                }],
-                new: true
-            })
-        ])
+        const user = await User.findOneAndUpdate({
+            _id: userId
+        }, {
+            $set: {
+                "teams.$[element].role": role
+            }
+        }, {
+            arrayFilters: [{
+                'element._id': teamId
+            }],
+            new: true
+        })
 
         if (!user) throw "Can not find user or user not a member in team"
 
         return res.json({
-            message: `${user.name} is now ${role}!`,
+            message: `${user.name} is now ${role}!`, user
         })
     } catch (error) {
         next(error)

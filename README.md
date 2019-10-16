@@ -59,7 +59,11 @@ $ yarn run debugtest
 
 #### AUTH
 ##### POST
-- `/login` => user with token key
+- `/login`
+```
+@param: body: { email, password}
+@return: user with token key
+```
 
 #### USER
 
@@ -74,35 +78,248 @@ $ yarn run debugtest
 @param: body: { name, email, password}
 @return: user
 ```
-- `/admin/:userIds/block` => raw
-- `/admin/:userIds/unlock` => raw
-
+- `/admin/:userIds/block`
+```
+@return: raw
+```
+- `/admin/:userIds/unlock`
+```
+@return: raw
+```
 ##### GET
-- `/` => users
-- `/:userId` => user
-- `/get-by-email/:email` => user
+- `/`
+```
+@return: users
+```
+- `/:userId`
+```
+@return: user
+```
+- `/get-by-email/:email`
+```
+@return: user
+```
 
 ##### PUT
-- `/:userId` => user
+- `/:userId`
+```
+@param: body: { name, email, password}
+@return: user
+```
 
 ##### DELETE
-- `/admin/:userId` => raw
+- `/admin/:userId`
+```
+@return: raw
+```
 
 #### PROJECT
 
 ##### POST
 - `/`
+```
+@param: body: { title, description, isAllowMemberAddMember }
+@return: project
+```
 - `/:projectId/delete`
+```
+@return: project
+```
 - `/:projectId/restore`
+```
+@return: project
+```
 - `/:projectId/stored`
-
+```
+@return: project
+```
+- `/:projectId/undoStored`
+```
+@return: project
+```
+- `/:projectId/add-members`
+```
+@param: body: { userIds }
+```
+- `/:projectId/remove-members`
+```
+@param: body: { userIds }
+```
+- `/:projectId/agree-join-project`
+- `/:projectId/disagree-join-project`
+- `/:projectId/leave-project`
+- `/:projectId/change-user-role`
+```
+@param: body: { userId, role }
+@return: user
+```
 ##### GET
-
+- `/`
+```
+@return: projects
+```
+- `/:projectId`
+```
+@return: project
+```
 ##### PUT
-
+- `/:projectId"`
+```
+@param: body: { title, description, isAllowMemberAddMember }
+@return: project
+```
 ##### DELETE
 - `/:projectId`
+```
+@return: raw
+```
 
+#### JOB
+##### POST
+- `/`
+```
+@param: body: { title, description, isAllowMemberAddMember }, query: {projectId}
+@return: job
+```
+- `/sub-job`
+```
+@param: body: { title, description, isAllowMemberAddMember }, query: {jobId}
+@return: job
+```
+- `/:jobId/delete"`
+```
+@return: job
+```
+- `/:jobId/restore`
+```
+@return: job
+```
+- `/:jobId/completed`
+```
+@return: job
+```
+- `/:jobId/undoCompleted`
+```
+@return: job
+```
+- `/:jobId/add-members"`
+```
+@param: body: { userIds }
+```
+- `/:jobId/remove-members`
+```
+@param: body: { userIds }
+```
+- `/:jobId/agree-join-job`
+- `/:jobId/disagree-join-job`
+- `/:jobId/leave-job`
+- `/:jobId/change-user-role`
+```
+@return: user
+```
+##### GET
+- `/`
+```
+@param: query: { projectId }
+@return: jobs
+```
+- `/sub-jobs`
+```
+@param: query: { jobId }
+@return: jobs
+```
+- `/:jobId`
+##### PUT
+- `/:jobId"`
+```
+@param: body: { title, description, isAllowMemberAddMember }
+@return: jobs
+```
+##### DELETE
+- `/:jobId`
+```
+@return: raw
+```
+
+#### NOTIFY
+##### GET
+- `/`
+```
+@param: query: { isAction }
+@return: notifies
+```
+
+#### COMMENT
+##### POST
+- `/`
+```
+@param: body: { body }, query: { jobId }
+@return: comment
+```
+##### GET
+- `/`
+```
+@param: query: { jobId }
+@return: comments
+```
+- `/:commentId`
+```
+@return: comment
+```
+##### PUT
+- `/:commentId`
+```
+@param: body: { body }
+@return: comment
+```
+##### DELETE
+- `/:commentId`
+```
+@return: raw
+```
+
+#### TEAM
+##### POST
+- `/`
+```
+@param: name, description
+@return: team
+```
+- `/:teamId/add-members`
+```
+@param: body: { userIds }
+```
+- `/:teamId/remove-members`
+```
+@param: body: { userIds }
+```
+- `/:teamId/agree-join-team`
+- `/:teamId/disagree-join-team`
+- `/:teamId/leave-team`
+- `/:teamId/change-user-role`
+```
+@param: body: { userId, role  }
+```
+
+##### GET
+- `/`
+```
+@return: teams
+```
+- `/get-by-user`
+```
+@return: teamss
+```
+- `/:teamId`
+```
+@return: teams
+```
+##### PUT
+- `/:teamId`
+```
+@return: teams
+```
+##### DELETE
 
 ### Thông tin tác giả:
 
