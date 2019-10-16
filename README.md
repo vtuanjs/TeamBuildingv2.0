@@ -55,6 +55,47 @@ Sử dụng Chrome Dev Team để test. Không cần mở DB_TEST
 ```
 $ yarn run debugtest
 ```
+### API
+
+#### AUTH
+- POST
++ `/login` => user with token key
+
+#### USER
+
+- POST
++ `/` => user
++ `/admin` => user
+@param: 
+@return:
++ `/admin/:userIds/block` => raw
++ `/admin/:userIds/unlock` => raw
+
+- GET
++ `/` => users
++ `/:userId` => user
++ `/get-by-email/:email` => user
+
+- PUT
++ `/:userId` => user
+
+- DELETE
++ `/admin/:userId` => raw
+
+#### PROJECT
+- POST
++ `/`
++ `/:projectId/delete`
++ `/:projectId/restore`
++ `/:projectId/stored`
+
+- GET
+
+- PUT
+
+- DELETE
++ `/:projectId`
+
 
 ### Thông tin tác giả:
 
