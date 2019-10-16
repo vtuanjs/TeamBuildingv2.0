@@ -58,12 +58,10 @@ $ yarn run debugtest
 ### API
 
 #### AUTH
-##### POST
-- `/login`
-```
-@param: body: { email, password}
-@return: user with token key
-```
+
+| METHOD | API    | PARAMS                    | RETURN |
+|--------|--------|---------------------------|--------|
+| POST   | /login | body: { email, password } | user   |
 
 #### USER
 
@@ -100,152 +98,58 @@ $ yarn run debugtest
 | DELETE | /:projectId                       | params: { projectId }                                                        | raw      |
 
 #### JOB
-##### POST
-- `/`
-```
-@param: body: { title, description, isAllowMemberAddMember }, query: {projectId}
-@return: job
-```
-- `/sub-job`
-```
-@param: body: { title, description, isAllowMemberAddMember }, query: {jobId}
-@return: job
-```
-- `/:jobId/delete"`
-```
-@return: job
-```
-- `/:jobId/restore`
-```
-@return: job
-```
-- `/:jobId/completed`
-```
-@return: job
-```
-- `/:jobId/undoCompleted`
-```
-@return: job
-```
-- `/:jobId/add-members"`
-```
-@param: body: { userIds }
-```
-- `/:jobId/remove-members`
-```
-@param: body: { userIds }
-```
-- `/:jobId/agree-join-job`
-- `/:jobId/disagree-join-job`
-- `/:jobId/leave-job`
-- `/:jobId/change-user-role`
-```
-@return: user
-```
-##### GET
-- `/`
-```
-@param: query: { projectId }
-@return: jobs
-```
-- `/sub-jobs`
-```
-@param: query: { jobId }
-@return: jobs
-```
-- `/:jobId`
-##### PUT
-- `/:jobId"`
-```
-@param: body: { title, description, isAllowMemberAddMember }
-@return: jobs
-```
-##### DELETE
-- `/:jobId`
-```
-@return: raw
-```
+
+| METHOD | API                       | PARAMS                                                                      | RETURN |
+|--------|---------------------------|-----------------------------------------------------------------------------|--------|
+| POST   | /                         | body: { title, description, isAllowMemberAddMember },  query: { projectId } | job    |
+|        | /sub-job                  | body: { title, description, isAllowMemberAddMember }, query: { jobId }      | job    |
+|        | /:jobId/delete            | params: { jobId }                                                           | job    |
+|        | /:jobId/restore`          | params: { jobId }                                                           | job    |
+|        | /:jobId/completed         | params: { jobId }                                                           | job    |
+|        | /:jobId/undoCompleted     | params: { jobId }                                                           | job    |
+|        | /:jobId/add-members       | params: { jobId }, body: { userIds }                                        |        |
+|        | /:jobId/remove-members    | params: { jobId }, body: { userIds }                                        |        |
+|        | /:jobId/agree-join-job    | params: { jobId }                                                           |        |
+|        | /:jobId/disagree-join-job | params: { jobId }                                                           |        |
+|        | /:jobId/leave-job         | params: { jobId }                                                           |        |
+|        | /:jobId/change-user-role  | params: { jobId }, body: { userId, role }                                   | user   |
+| GET    | /                         | query: { projectId }                                                        | jobs   |
+|        | /sub-jobs                 | query: { jobId }                                                            | jobs   |
+|        | /:jobId                   | params: { jobId }                                                           | job    |
+| PUT    | /:jobId                   | body: { title, description, isAllowMemberAddMember }                        | job    |
+| DELETE | /:jobId                   | params: { jobId }                                                           | raw    |
 
 #### NOTIFY
-##### GET
-- `/`
-```
-@param: query: { isAction }
-@return: notifies
-```
+
+| METHOD | API | PARAMS              | RETURN   |
+|--------|-----|---------------------|----------|
+| GET    | /   | query: { isAction } | notifies |
 
 #### COMMENT
-##### POST
-- `/`
-```
-@param: body: { body }, query: { jobId }
-@return: comment
-```
-##### GET
-- `/`
-```
-@param: query: { jobId }
-@return: comments
-```
-- `/:commentId`
-```
-@return: comment
-```
-##### PUT
-- `/:commentId`
-```
-@param: body: { body }
-@return: comment
-```
-##### DELETE
-- `/:commentId`
-```
-@return: raw
-```
+
+| METHOD | API          | PARAMS                                | RETURN   |
+|--------|--------------|---------------------------------------|----------|
+| POST   | /            | body: { body }, query: { jobId }      | comment  |
+| GET    | /            | query: { jobId }                      | comments |
+|        | /:commentId` | params: { commentId }                 | comment  |
+| PUT    | /:commentId` | params: { commentId }, body: { body } | comment  |
+| DELETE | /:commentId  | params: { commentId }                 | raw      |
 
 #### TEAM
-##### POST
-- `/`
-```
-@param: name, description
-@return: team
-```
-- `/:teamId/add-members`
-```
-@param: body: { userIds }
-```
-- `/:teamId/remove-members`
-```
-@param: body: { userIds }
-```
-- `/:teamId/agree-join-team`
-- `/:teamId/disagree-join-team`
-- `/:teamId/leave-team`
-- `/:teamId/change-user-role`
-```
-@param: body: { userId, role  }
-```
 
-##### GET
-- `/`
-```
-@return: teams
-```
-- `/get-by-user`
-```
-@return: teamss
-```
-- `/:teamId`
-```
-@return: teams
-```
-##### PUT
-- `/:teamId`
-```
-@param: body: { name, description }
-@return: teams
-```
-##### DELETE
+| METHOD | API                         | PARAMS                                           | RETURN |
+|--------|-----------------------------|--------------------------------------------------|--------|
+| POST   | /                           | body: { name, description }                      | team   |
+|        | /:teamId/add-members        | params: { teamId },  body: { userIds }           |        |
+|        | /:teamId/remove-members     | params: { teamId },  body: { userIds }           |        |
+|        | /:teamId/agree-join-team    | params: { teamId }                               |        |
+|        | /:teamId/disagree-join-team | params: { teamId }                               |        |
+|        | /:teamId/leave-team         | params: { teamId }                               |        |
+|        | /:teamId/change-user-role   | params: { teamId },  body: { userId, role }      | user   |
+| GET    | /                           |                                                  | teams  |
+|        | /get-by-user                |                                                  | teams  |
+|        | /:teamId                    | params: { teamId }                               | team   |
+| PUT    | /:teamId                    | params: { teamId },  body: { name, description } | team   |
 
 ### Thông tin tác giả:
 
