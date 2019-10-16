@@ -58,43 +58,50 @@ $ yarn run debugtest
 ### API
 
 #### AUTH
-- POST
-+ `/login` => user with token key
+##### POST
+- `/login` => user with token key
 
 #### USER
 
-- POST
-+ `/` => user
-+ `/admin` => user
-@param: 
-@return:
-+ `/admin/:userIds/block` => raw
-+ `/admin/:userIds/unlock` => raw
+##### POST
+- `/`
+```
+@param: body: { name, email, password}
+@return: user
+```
+- `/admin`
+```
+@param: body: { name, email, password}
+@return: user
+```
+- `/admin/:userIds/block` => raw
+- `/admin/:userIds/unlock` => raw
 
-- GET
-+ `/` => users
-+ `/:userId` => user
-+ `/get-by-email/:email` => user
+##### GET
+- `/` => users
+- `/:userId` => user
+- `/get-by-email/:email` => user
 
-- PUT
-+ `/:userId` => user
+##### PUT
+- `/:userId` => user
 
-- DELETE
-+ `/admin/:userId` => raw
+##### DELETE
+- `/admin/:userId` => raw
 
 #### PROJECT
-- POST
-+ `/`
-+ `/:projectId/delete`
-+ `/:projectId/restore`
-+ `/:projectId/stored`
 
-- GET
+##### POST
+- `/`
+- `/:projectId/delete`
+- `/:projectId/restore`
+- `/:projectId/stored`
 
-- PUT
+##### GET
 
-- DELETE
-+ `/:projectId`
+##### PUT
+
+##### DELETE
+- `/:projectId`
 
 
 ### Thông tin tác giả:
