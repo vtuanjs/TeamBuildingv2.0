@@ -628,6 +628,35 @@ module.exports.removeMembers = async (req, res, next) => {
     }
 }
 
+const handleShowMembers = (members, jobId) => {
+    return members.map(member => {
+        const jobs = member.jobs.filter(job => {
+            return job._id.equals(jobId)
+        })
+
+        return {
+            _id: member._id,
+            name: member._name,
+            job: jobs[0]
+        }
+    })
+}
+
+module.exports.showMembers = async (req, res, next) => {
+    let { jobId } = req.params
+    try {
+        const members = await User.find({ 'jobs._id': jobId })
+
+        if (!members) {
+            throw 'Can not find any members'
+        }
+
+        return res.json({ members: handleShowMembers(members, jobId) })
+    } catch (error) {
+        next(error)
+    }
+}
+
 module.exports.leaveJob = async (req, res, next) => {
     const { jobId } = req.params
     const signedUser = req.user

@@ -123,13 +123,13 @@ describe('PUT /team/:teamId', () => {
 
 describe('PREPARE ADD MEMBER TO JOB', () => {
     it('Get userIds will add to team', done => {
-        // userIds cache from project
+        // userIds cache from team
         redis.get('userIds').then(data => {
             userIds = JSON.parse(data)
             done()
         }).catch(error => done(error))
     })
-    it('Get userId will add to project', done => {
+    it('Get userId will add to team', done => {
         request(app).get('/user/get-by-email/' + "ngocancsdl@gmail.com").then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
@@ -148,7 +148,6 @@ describe('POST /team/:teamId/add-members', () => {
             userIds
         }).then(res => {
             const body = res.body
-            debugger
             expect(res.statusCode).to.equals(200)
             done()
         }).catch((error) => done(error))
@@ -254,5 +253,46 @@ describe('POST /team/:teamId/leave-team', () => {
             expect(res.statusCode).to.equals(200)
             done()
         }).catch(error => done(error))
+    })
+})
+
+describe('GET /team/:teamId/show-members', () => {
+    it('OK, show members in team', done => {
+        request(app).get(`/team/${listTeams[0]._id}/show-members`).set({
+            'x-access-token': owner.tokenKey
+        }).then(res => {
+            const body = res.body
+            expect(res.statusCode).to.equals(200)
+            expect(body).to.contain.property('members')
+            done()
+        }).catch((error) => done(error))
+    })
+})
+
+describe('DELETE /team/:teamId', () => {
+    it('OK, delete immediately team', done => {
+        request(app).delete(`/team/${listTeams[2]._id}/`).set({
+            'x-access-token': owner.tokenKey
+        }).then(res => {
+            const body = res.body
+            expect(res.statusCode).to.equals(200)
+            expect(body).to.contain.property('raw')
+            expect(body.raw.ok).to.equals(1)
+            done()
+        }).catch((error) => done(error))
+    })
+    it('OK, check team already deleted ?', done => {
+        request(app).get(`/team/${listTeams[2]._id}`).set({
+            'x-access-token': owner.tokenKey
+        }).then(res => {
+            const body = res.body
+            expect(res.statusCode).to.satisfy(status => {
+                if (status === 400 || status === 403) {
+                    return true
+                }
+            })
+            expect(body).to.not.contain.property('team')
+            done()
+        }).catch((error) => done(error))
     })
 })

@@ -125,6 +125,23 @@ module.exports.updateTeam = async (req, res, next) => {
     }
 }
 
+module.exports.deleteTeam = async (req, res, next) => {
+    const teamId = req.params.teamId
+
+    try {
+        const raw = await Team.deleteOne({
+            _id: teamId
+        })
+
+        return res.json({
+            message: "Delete team successfully!",
+            raw
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
 // Add member function
 const getVerifyUsers = (arrayUserIds) => {
     return User.find({
@@ -370,6 +387,35 @@ module.exports.leaveTeam = async (req, res, next) => {
         return res.json({
             message: `Leave project successfully!`,
         })
+    } catch (error) {
+        next(error)
+    }
+}
+
+const handleShowMembers = (members, teamId) => {
+    return members.map(member => {
+        const teams = member.teams.filter(team => {
+            return team._id.equals(teamId)
+        })
+
+        return {
+            _id: member._id,
+            name: member._name,
+            team: teams[0]
+        }
+    })
+}
+
+module.exports.showMembers = async (req, res, next) => {
+    let { teamId } = req.params
+    try {
+        const members = await User.find({ 'teams._id': teamId })
+
+        if (!members) {
+            throw 'Can not find any members'
+        }
+
+        return res.json({ members: handleShowMembers(members, teamId) })
     } catch (error) {
         next(error)
     }

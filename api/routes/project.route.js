@@ -61,6 +61,8 @@ router.post("/:projectId/remove-members", authentication.required, checkPermit({
     source: "params"
 }), project.removeMembers)
 
+router.get("/:projectId/show-members", authentication.required, project.showMembers)
+
 router.post("/:projectId/agree-join-project", authentication.required, project.agreeJoinProject)
 
 router.post("/:projectId/disagree-join-project", authentication.required, project.disAgreeJoinProject)

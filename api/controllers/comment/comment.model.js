@@ -13,5 +13,24 @@ const CommentSchema = new Schema({
     commentOn: { type: ObjectId, ref: 'Job' },
 }, {timestamps: true, autoCreate: true})
 
+CommentSchema.pre('deleteOne', function (next) {
+    const _id = this.getQuery()["_id"]
+    mongoose.model("User").updateMany({
+        'comments._id': _id
+    }, {
+        $pull: {
+            comments: {
+                _id: _id
+            }
+        }
+    }, function (err, result) {
+        if (err) {
+            next(err)
+        } else {
+            next()
+        }
+    })
+})
+
 const Comment = mongoose.model("Comment", CommentSchema)
 module.exports = Comment 

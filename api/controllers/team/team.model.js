@@ -29,5 +29,24 @@ const TeamSchema = new Schema({
     autoCreate: true
 })
 
+TeamSchema.pre('deleteOne', function (next) {
+    const _id = this.getQuery()["_id"]
+    mongoose.model("User").updateMany({
+        'teams._id': _id
+    }, {
+        $pull: {
+            teams: {
+                _id: _id
+            }
+        }
+    }, function (err, result) {
+        if (err) {
+            next(err)
+        } else {
+            next()
+        }
+    })
+})
+
 const Team = mongoose.model('Team', TeamSchema)
 module.exports = Team

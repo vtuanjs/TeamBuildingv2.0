@@ -34,6 +34,14 @@ router.post("/:teamId/disagree-join-team", authentication.required, team.disAgre
 
 router.post("/:teamId/leave-team", authentication.required, team.leaveTeam)
 
+router.get("/:teamId/show-members", authentication.required, team.showMembers)
+
+router.delete("/:teamId/", authentication.required, checkPermit({
+    model: "team",
+    role: "owner",
+    source: "params"
+}), team.deleteTeam)
+
 router.post("/:teamId/change-user-role", authentication.required, checkPermit({
     model: "team",
     role: "owner",

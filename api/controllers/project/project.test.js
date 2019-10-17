@@ -325,6 +325,19 @@ describe('POST /project/:projectId/remove-members', () => {
     })
 })
 
+describe('GET /project/:projectId/show-members', () => {
+    it('OK, show members in project', done => {
+        request(app).get(`/project/${listProjects[0]._id}/show-members`).set({
+            'x-access-token': owner.tokenKey
+        }).then(res => {
+            const body = res.body
+            expect(res.statusCode).to.equals(200)
+            expect(body).to.contain.property('members')
+            done()
+        }).catch((error) => done(error))
+    })
+})
+
 describe('POST /project/:projectId/delete', () => {
     it('OK, send to trash project', done => {
         request(app).post(`/project/${listProjects[0]._id}/delete`).set({

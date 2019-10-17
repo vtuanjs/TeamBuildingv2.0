@@ -92,6 +92,8 @@ router.post("/:jobId/disagree-join-job", authentication.required, job.disAgreeJo
 
 router.post("/:jobId/leave-job", authentication.required, job.leaveJob)
 
+router.get("/:jobId/show-members", authentication.required, job.showMembers)
+
 router.post("/:jobId/change-user-role", authentication.required, checkPermit({
     model: "job",
     role: "owner",

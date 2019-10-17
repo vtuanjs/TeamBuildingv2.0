@@ -510,6 +510,35 @@ module.exports.removeMembers = async (req, res, next) => {
     }
 }
 
+const handleShowMembers = (members, projectId) => {
+    return members.map(member => {
+        const projects = member.projects.filter(project => {
+            return project._id.equals(projectId)
+        })
+
+        return {
+            _id: member._id,
+            name: member._name,
+            project: projects[0]
+        }
+    })
+}
+
+module.exports.showMembers = async (req, res, next) => {
+    let { projectId } = req.params
+    try {
+        const members = await User.find({ 'projects._id': projectId })
+
+        if (!members) {
+            throw 'Can not find any members'
+        }
+
+        return res.json({ members: handleShowMembers(members, projectId) })
+    } catch (error) {
+        next(error)
+    }
+}
+
 module.exports.leaveProject = async (req, res, next) => {
     const { projectId } = req.params
     const signedUser = req.user

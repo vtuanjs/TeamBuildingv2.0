@@ -413,6 +413,19 @@ describe('POST /job/:jobId/remove-members', () => {
     })
 })
 
+describe('GET /job/:projectId/show-members', () => {
+    it('OK, show members in project', done => {
+        request(app).get(`/project/${listJobs[0]._id}/show-members`).set({
+            'x-access-token': owner.tokenKey
+        }).then(res => {
+            const body = res.body
+            expect(res.statusCode).to.equals(200)
+            expect(body).to.contain.property('members')
+            done()
+        }).catch((error) => done(error))
+    })
+})
+
 describe('POST /job/:jobId/change-user-role', () => {
     it('OK, change user role', done => {
         request(app).post(`/job/${listJobs[0]._id}/change-user-role`).set({
