@@ -24,9 +24,9 @@ const queryFindNotify = (userId, isAction) => {
 
 module.exports.getNotifies = async (req, res, next) => {
     const { isAction } = req.query
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
-        const query = queryFindNotify(signedUser._id, isAction)
+        const query = queryFindNotify(signedInUser._id, isAction)
         const notifies = await Notify.find(query)
         if (notifies.length === 0) {
             throw 'Can not any notify'

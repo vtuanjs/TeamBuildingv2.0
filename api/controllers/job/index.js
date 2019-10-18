@@ -37,7 +37,7 @@ module.exports.postJob = async (req, res, next) => {
         isAllowMemberAddMember,
     } = req.body
     const projectId = req.query.projectId
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
         const job = await Job.create({
             title,
@@ -45,12 +45,12 @@ module.exports.postJob = async (req, res, next) => {
             allowed: {
                 isAllowMemberAddMember,
             },
-            author: signedUser._id,
+            author: signedInUser._id,
             parent: projectId,
             onModel: 'Project'
         })
         await Promise.all([
-            pushJobToUser(job._id, signedUser),
+            pushJobToUser(job._id, signedInUser),
             pushJobToProjectOwner(job._id, projectId)
         ])
 
@@ -86,7 +86,7 @@ module.exports.postSubJob = async (req, res, next) => {
         isAllowMemberAddMember,
     } = req.body
     const parentJobId = req.query.jobId
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
         const parentJob = await Job.findById(parentJobId)
         if (!parentJob) throw 'Job not found'
@@ -97,13 +97,13 @@ module.exports.postSubJob = async (req, res, next) => {
             allowed: {
                 isAllowMemberAddMember,
             },
-            author: signedUser._id,
+            author: signedInUser._id,
             parent: parentJobId,
             onModel: 'Job'
         })
 
         await Promise.all([
-            pushJobToUser(job._id, signedUser),
+            pushJobToUser(job._id, signedInUser),
             pushJobToParentJobOwner(job._id, parentJobId)
         ])
 
@@ -480,7 +480,7 @@ const isAllowed = ({ job, idCheck, userCheck }) => {
 module.exports.addMembers = async (req, res, next) => {
     const userIds = req.body.userIds
     const jobId = req.params.jobId
-    const signedUser = req.user
+    const signedInUser = req.user
     const session = await mongoose.startSession()
     try {
         await session.withTransaction(async () => {
@@ -497,7 +497,7 @@ module.exports.addMembers = async (req, res, next) => {
             if (!isAllowed({
                 job,
                 idCheck: jobId,
-                userCheck: signedUser
+                userCheck: signedInUser
             })) {
                 throw 'Member can not add member'
             }
@@ -509,7 +509,7 @@ module.exports.addMembers = async (req, res, next) => {
                     session
                 }),
                 createNotifyJoinJob({
-                    message: `${signedUser.name} invite you join job ${job.title}`,
+                    message: `${signedInUser.name} invite you join job ${job.title}`,
                     jobId,
                     userIds: arrayUserIds,
                     session
@@ -527,11 +527,11 @@ module.exports.addMembers = async (req, res, next) => {
 
 module.exports.agreeJoinJob = async (req, res, next) => {
     const jobId = req.params.jobId
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
         await Promise.all([
             User.updateOne({
-                _id: signedUser._id,
+                _id: signedInUser._id,
                 'jobs._id': jobId
             }, {
                 $set: {
@@ -540,7 +540,7 @@ module.exports.agreeJoinJob = async (req, res, next) => {
             }),
 
             Notify.updateOne({
-                user: signedUser._id,
+                user: signedInUser._id,
                 title: INVITE_JOIN_JOB,
                 'secretKey.jobId': jobId
             }, {
@@ -563,11 +563,11 @@ module.exports.agreeJoinJob = async (req, res, next) => {
 
 module.exports.disAgreeJoinJob = async (req, res, next) => {
     const jobId = req.params.jobId
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
         await Promise.all([
             User.updateOne({
-                _id: signedUser._id,
+                _id: signedInUser._id,
                 'jobs._id': jobId
             }, {
                 $pull: {
@@ -578,7 +578,7 @@ module.exports.disAgreeJoinJob = async (req, res, next) => {
             }),
 
             Notify.updateOne({
-                user: signedUser._id,
+                user: signedInUser._id,
                 title: INVITE_JOIN_JOB,
                 'secretKey.jobId': jobId
             }, {
@@ -659,10 +659,10 @@ module.exports.showMembers = async (req, res, next) => {
 
 module.exports.leaveJob = async (req, res, next) => {
     const { jobId } = req.params
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
         await User.updateOne({
-            _id: signedUser._id
+            _id: signedInUser._id
         }, {
             $unset: {
                 jobs: {

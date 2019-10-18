@@ -22,18 +22,18 @@ module.exports.postProject = async (req, res, next) => {
         description,
         isAllowMemberAddMember,
     } = req.body
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
         const project = await Project.create({
             title,
             description,
-            author: signedUser._id,
+            author: signedInUser._id,
             allowed: {
                 isAllowMemberAddMember,
             }
         })
 
-        await pushProjectToUser(project._id, signedUser)
+        await pushProjectToUser(project._id, signedInUser)
 
         return res.json({
             message: `Create project successfully!`,
@@ -234,10 +234,10 @@ module.exports.updateProject = async (req, res, next) => {
 }
 
 module.exports.getProjects = async (req, res, next) => {
-    const signedUser = req.user
+    const signedInUser = req.user
 
     try {
-        const arrayProject = signedUser.projects.map(project => {
+        const arrayProject = signedInUser.projects.map(project => {
             return project._id
         })
 
@@ -364,7 +364,7 @@ const isAllowed = ({ project, idCheck, userCheck }) => {
 module.exports.addMembers = async (req, res, next) => {
     const userIds = req.body.userIds
     const projectId = req.params.projectId
-    const signedUser = req.user
+    const signedInUser = req.user
     const session = await mongoose.startSession()
     try {
         await session.withTransaction(async () => {
@@ -381,7 +381,7 @@ module.exports.addMembers = async (req, res, next) => {
             if (!isAllowed({
                 project,
                 idCheck: projectId,
-                userCheck: signedUser
+                userCheck: signedInUser
             })) {
                 throw 'Member can not add member'
             }
@@ -393,7 +393,7 @@ module.exports.addMembers = async (req, res, next) => {
                     session
                 }),
                 createNotifyJoinProject({
-                    message: `${signedUser.name} invite you join project ${project.title}`,
+                    message: `${signedInUser.name} invite you join project ${project.title}`,
                     projectId,
                     userIds: arrayUserIds,
                     session
@@ -411,11 +411,11 @@ module.exports.addMembers = async (req, res, next) => {
 
 module.exports.agreeJoinProject = async (req, res, next) => {
     const projectId = req.params.projectId
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
         await Promise.all([
             User.updateOne({
-                _id: signedUser._id,
+                _id: signedInUser._id,
                 'projects._id': projectId
             }, {
                 $set: {
@@ -424,7 +424,7 @@ module.exports.agreeJoinProject = async (req, res, next) => {
             }),
 
             Notify.updateOne({
-                user: signedUser._id,
+                user: signedInUser._id,
                 title: INVITE_JOIN_PROJECT,
                 'secretKey.projectId': projectId
             }, {
@@ -447,11 +447,11 @@ module.exports.agreeJoinProject = async (req, res, next) => {
 
 module.exports.disAgreeJoinProject = async (req, res, next) => {
     const projectId = req.params.projectId
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
         await Promise.all([
             User.updateOne({
-                _id: signedUser._id,
+                _id: signedInUser._id,
                 'projects._id': projectId
             }, {
                 $pull: {
@@ -462,7 +462,7 @@ module.exports.disAgreeJoinProject = async (req, res, next) => {
             }),
 
             Notify.updateOne({
-                user: signedUser._id,
+                user: signedInUser._id,
                 title: INVITE_JOIN_PROJECT,
                 'secretKey.projectId': projectId
             }, {
@@ -541,10 +541,10 @@ module.exports.showMembers = async (req, res, next) => {
 
 module.exports.leaveProject = async (req, res, next) => {
     const { projectId } = req.params
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
         await User.updateOne({
-            _id: signedUser._id
+            _id: signedInUser._id
         }, {
             $unset: {
                 projects: {

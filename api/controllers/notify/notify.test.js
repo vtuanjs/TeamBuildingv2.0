@@ -3,7 +3,7 @@ const expect = require('chai').expect
 const request = require('supertest')
 const app = require('../../../app')
 
-let signedUser = ''
+let signedInUser = ''
 
 describe('PREPARE TESTING NOTIFY', () => {
     it('Ok, login user account', done => {
@@ -15,7 +15,7 @@ describe('PREPARE TESTING NOTIFY', () => {
             expect(res.statusCode).to.equals(200)
             expect(body).to.contain.property('user')
             expect(body.user).to.contain.property('tokenKey')
-            signedUser = body.user
+            signedInUser = body.user
             done()
         }).catch((error) => done(error))
     })
@@ -24,7 +24,7 @@ describe('PREPARE TESTING NOTIFY', () => {
 describe('GET /notify', () => {
     it('Ok, get notify', done => {
         request(app).get(`/notify`).set({
-            'x-access-token': signedUser.tokenKey
+            'x-access-token': signedInUser.tokenKey
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)

@@ -54,12 +54,12 @@ const shouldIsAllowed = ({ user, propertyInUser, propertyIdCheck, allowed }) => 
 
 const isInProject = (allowed, source) => {
     return (req) => {
-        const signedUser = req.user
+        const signedInUser = req.user
         let projectId = findParameterFromSource('projectId', source)(req)
 
         if (projectId) {
             if (shouldIsAllowed({
-                user: signedUser,
+                user: signedInUser,
                 propertyInUser: 'projects',
                 propertyIdCheck: projectId,
                 allowed
@@ -74,12 +74,12 @@ const isInProject = (allowed, source) => {
 
 const isInJob = (allowed, source) => {
     return (req) => {
-        const signedUser = req.user
+        const signedInUser = req.user
         let jobId = findParameterFromSource('jobId', source)(req)
 
         if (jobId) {
             if (shouldIsAllowed({
-                user: signedUser,
+                user: signedInUser,
                 propertyInUser: 'jobs',
                 propertyIdCheck: jobId,
                 allowed
@@ -94,12 +94,12 @@ const isInJob = (allowed, source) => {
 
 const isInTeam = (allowed, source) => {
     return (req) => {
-        const signedUser = req.user
+        const signedInUser = req.user
         let teamId = findParameterFromSource('teamId', source)(req)
 
         if (teamId) {
             if (shouldIsAllowed({
-                user: signedUser,
+                user: signedInUser,
                 propertyInUser: 'teams',
                 propertyIdCheck: teamId,
                 allowed

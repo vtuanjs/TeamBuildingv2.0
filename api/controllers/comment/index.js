@@ -4,12 +4,12 @@ const redis = require('../../middlewares/redis')
 module.exports.postComment = async (req, res, next) => {
     const { body } = req.body
     const { jobId } = req.query
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
         const comment = await Comment.create({
             body,
             commentOn: jobId,
-            author: signedUser._id
+            author: signedInUser._id
         })
 
         return res.json({ message: `Create comment successfully!`, comment })
@@ -20,11 +20,11 @@ module.exports.postComment = async (req, res, next) => {
 
 module.exports.deleteComment = async (req, res, next) => {
     const { commentId } = req.params
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
         const raw = await Comment.deleteOne({
             _id: commentId,
-            author: signedUser._id
+            author: signedInUser._id
         })
 
         if (raw.ok != 1) {
@@ -42,11 +42,11 @@ module.exports.deleteComment = async (req, res, next) => {
 module.exports.updateComment = async (req, res, next) => {
     const { commentId } = req.params
     const { body } = req.body
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
         let comment = await Comment.findOne({
             _id: commentId,
-            author: signedUser._id
+            author: signedInUser._id
         })
 
         if (!comment) {

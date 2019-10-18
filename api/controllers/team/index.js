@@ -5,17 +5,17 @@ const INVITE_JOIN_TEAM = 'Invite Join Team'
 const mongoose = require('mongoose')
 
 module.exports.postTeam = async (req, res, next) => {
-    const signedUser = req.user
+    const signedInUser = req.user
     const { name, description } = req.body
     try {
         const team = await Team.create({
             name,
             description,
-            author: signedUser._id
+            author: signedInUser._id
         })
 
         await User.findByIdAndUpdate(
-            signedUser._id,
+            signedInUser._id,
             {
                 $addToSet: {
                     teams: {
@@ -50,9 +50,9 @@ module.exports.getTeams = async (req, res, next) => {
 }
 
 module.exports.getTeamsByUser = async (req, res, next) => {
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
-        const arrayTeamIdsOfUser = signedUser.teams.map(team => {
+        const arrayTeamIdsOfUser = signedInUser.teams.map(team => {
             return team._id
         })
         const teams = await Team.find({
@@ -222,7 +222,7 @@ const isAllowed = ({ team, idCheck, userCheck }) => {
 module.exports.addMembers = async (req, res, next) => {
     const userIds = req.body.userIds
     const teamId = req.params.teamId
-    const signedUser = req.user
+    const signedInUser = req.user
     const session = await mongoose.startSession()
     try {
         await session.withTransaction(async () => {
@@ -239,7 +239,7 @@ module.exports.addMembers = async (req, res, next) => {
             if (!isAllowed({
                 team,
                 idCheck: teamId,
-                userCheck: signedUser
+                userCheck: signedInUser
             })) {
                 throw 'Member can not add member'
             }
@@ -251,7 +251,7 @@ module.exports.addMembers = async (req, res, next) => {
                     session
                 }),
                 createNotifyJoinTeam({
-                    message: `${signedUser.name} invite you join team ${team.title}`,
+                    message: `${signedInUser.name} invite you join team ${team.title}`,
                     teamId,
                     userIds: arrayUserIds,
                     session
@@ -269,11 +269,11 @@ module.exports.addMembers = async (req, res, next) => {
 
 module.exports.agreeJoinTeam = async (req, res, next) => {
     const teamId = req.params.teamId
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
         await Promise.all([
             User.updateOne({
-                _id: signedUser._id,
+                _id: signedInUser._id,
                 'teams._id': teamId
             }, {
                 $set: {
@@ -282,7 +282,7 @@ module.exports.agreeJoinTeam = async (req, res, next) => {
             }),
 
             Notify.updateOne({
-                user: signedUser._id,
+                user: signedInUser._id,
                 title: INVITE_JOIN_TEAM,
                 'secretKey.teamId': teamId
             }, {
@@ -305,11 +305,11 @@ module.exports.agreeJoinTeam = async (req, res, next) => {
 
 module.exports.disAgreeJoinTeam = async (req, res, next) => {
     const teamId = req.params.teamId
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
         await Promise.all([
             User.updateOne({
-                _id: signedUser._id,
+                _id: signedInUser._id,
                 'teams._id': teamId
             }, {
                 $pull: {
@@ -320,7 +320,7 @@ module.exports.disAgreeJoinTeam = async (req, res, next) => {
             }),
 
             Notify.updateOne({
-                user: signedUser._id,
+                user: signedInUser._id,
                 title: INVITE_JOIN_TEAM,
                 'secretKey.teamId': teamId
             }, {
@@ -372,10 +372,10 @@ module.exports.removeMembers = async (req, res, next) => {
 
 module.exports.leaveTeam = async (req, res, next) => {
     const { teamId } = req.params
-    const signedUser = req.user
+    const signedInUser = req.user
     try {
         await User.updateOne({
-            _id: signedUser._id
+            _id: signedInUser._id
         }, {
             $unset: {
                 teams: {
