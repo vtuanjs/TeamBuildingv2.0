@@ -39,6 +39,8 @@ module.exports.login = async (req, res, next) => {
 
             //Return user infomation with token key
             let userObject = foundUser.toObject()
+            // Don't return password
+            delete userObject.password
             userObject.tokenKey = tokenKey
 
             return res.json({
