@@ -4,19 +4,15 @@ const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 require('dotenv').config()
 const { ACCESS_CONTROL_ORIGIN } = process.env
+const cors = require('cors')
 
+app.use(cors({ origin: ACCESS_CONTROL_ORIGIN }))
 app.use(express.static('public'))
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 app.set('view engine', 'pug')
 app.set('views', './views')
 app.use(cookieParser())
-
-app.use(function (_req, res, next) {
-    res.header("Access-Control-Allow-Origin", ACCESS_CONTROL_ORIGIN)
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    next();
-});
 
 app.use('/', require('./api/routes/index.route'))
 app.use('/user', require('./api/routes/user.route'))

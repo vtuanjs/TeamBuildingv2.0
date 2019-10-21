@@ -17,6 +17,10 @@ Team Building là một phần mềm được viết ra nhằm quản lí tiến
 - Code viết tách biệt theo mô hình Component.
 - Function được viết riêng biệt theo chức năng
 
+### CẤU TRÚC APP
+
+![alt](https://imgur.com/bXjYIUr)
+
 ### Huớng dẫn sử dụng
 1. Cài đặt
 ```
