@@ -19,7 +19,7 @@ Team Building là một phần mềm được viết ra nhằm quản lí tiến
 
 ### CẤU TRÚC APP
 
-![alt](https://imgur.com/bXjYIUr)
+![alt](https://i.imgur.com/bXjYIUr.png)
 
 ### Huớng dẫn sử dụng
 1. Cài đặt
