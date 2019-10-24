@@ -34,14 +34,14 @@ describe('POST /project', () => {
             'x-access-token': owner.tokenKey
         }).send({
             title: 'Project 1',
-            description: 'Project 1 Description',
+            description: 'curae donec pharetra magna vestibulum aliquet ultrices erat tortor sollicitudin mi sit',
             isAllowMemberAddMember: 0
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
             expect(body).to.contain.property('project')
             expect(body.project.title).to.equals('Project 1')
-            expect(body.project.description).to.equals('Project 1 Description')
+            expect(body.project.description).to.equals('curae donec pharetra magna vestibulum aliquet ultrices erat tortor sollicitudin mi sit')
             done()
         }).catch((error) => done(error))
     })
@@ -50,13 +50,13 @@ describe('POST /project', () => {
             'x-access-token': owner.tokenKey
         }).send({
             title: 'Project 2',
-            description: 'Project 2 Description'
+            description: 'a libero nam dui proin leo odio porttitor id consequat'
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
             expect(body).to.contain.property('project')
             expect(body.project.title).to.equals('Project 2')
-            expect(body.project.description).to.equals('Project 2 Description')
+            expect(body.project.description).to.equals('a libero nam dui proin leo odio porttitor id consequat')
             done()
         }).catch((error) => done(error))
     })
@@ -65,13 +65,13 @@ describe('POST /project', () => {
             'x-access-token': owner.tokenKey
         }).send({
             title: 'Project 3',
-            description: 'Project 3 Description'
+            description: 'ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae duis faucibus'
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
             expect(body).to.contain.property('project')
             expect(body.project.title).to.equals('Project 3')
-            expect(body.project.description).to.equals('Project 3 Description')
+            expect(body.project.description).to.equals('ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae duis faucibus')
             done()
         }).catch((error) => done(error))
     })
@@ -80,13 +80,13 @@ describe('POST /project', () => {
             'x-access-token': owner.tokenKey
         }).send({
             title: 'Project 4',
-            description: 'Project 4 Description'
+            description: 'eget eleifend luctus ultricies eu nibh quisque id justo sit amet sapien dignissim'
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
             expect(body).to.contain.property('project')
             expect(body.project.title).to.equals('Project 4')
-            expect(body.project.description).to.equals('Project 4 Description')
+            expect(body.project.description).to.equals('eget eleifend luctus ultricies eu nibh quisque id justo sit amet sapien dignissim')
             done()
         }).catch((error) => done(error))
     })
@@ -95,13 +95,13 @@ describe('POST /project', () => {
             'x-access-token': owner.tokenKey
         }).send({
             title: 'Project 5',
-            description: 'Project 5 Description'
+            description: 'vitae consectetuer eget rutrum at lorem integer tincidunt ante vel ipsum praesent blandit lacinia erat vestibulum sed magna at nunc'
         }).then(res => {
             const body = res.body
             expect(res.statusCode).to.equals(200)
             expect(body).to.contain.property('project')
             expect(body.project.title).to.equals('Project 5')
-            expect(body.project.description).to.equals('Project 5 Description')
+            expect(body.project.description).to.equals('vitae consectetuer eget rutrum at lorem integer tincidunt ante vel ipsum praesent blandit lacinia erat vestibulum sed magna at nunc')
             done()
         }).catch((error) => done(error))
     })

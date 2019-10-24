@@ -3,10 +3,10 @@ const app = express()
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 require('dotenv').config()
-const { ACCESS_CONTROL_ORIGIN } = process.env
+const IP_ACCESS = process.env.ACCESS_CONTROL_ORIGIN || '*'
 const cors = require('cors')
 
-app.use(cors({ origin: ACCESS_CONTROL_ORIGIN }))
+app.use(cors({ origin: IP_ACCESS }))
 app.use(express.static('public'))
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())

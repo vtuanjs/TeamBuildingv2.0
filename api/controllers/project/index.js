@@ -247,8 +247,8 @@ module.exports.getProjects = async (req, res, next) => {
                     $in: arrayProject
                 }
             },
-            "title createdAt"
-        )
+            "title createdAt description author"
+        ).populate('author', 'name')
 
         if (!projects) throw "Can not show project"
         return res.json({
