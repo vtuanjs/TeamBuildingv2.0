@@ -80,6 +80,11 @@ module.exports.postAdmin = async (req, res, next) => {
 
 const comparePassword = (oldPassword, password) => {
     return bcrypt.compare(oldPassword, password)
+        .then(same => {
+            if (!same) {
+                throw "Old password wrong"
+            }
+        })
 }
 
 module.exports.updateUser = async (req, res, next) => {
@@ -100,12 +105,8 @@ module.exports.updateUser = async (req, res, next) => {
                 throw "Password must be eight characters or longer, must contain at least 1 numeric character, 1 lowercase charater"
             }
 
-            const comparePwd = await comparePassword(oldPassword, user.password)
-            if (!comparePwd) {
-                throw "Old password wrong"
-            } else {
-                password = await encryptedPassword(password)
-            }
+            await comparePassword(oldPassword, user.password)
+            password = await encryptedPassword(password)
         }
 
         const query = {

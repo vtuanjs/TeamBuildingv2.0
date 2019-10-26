@@ -29,7 +29,12 @@ module.exports.login = async (req, res) => {
             const tokenKey = await generateToken(foundUser, secretString, tokenLife)
 
             return res.json({
-                user: { tokenKey }
+                user: {
+                    _id: foundUser._id,
+                    name: foundUser.name,
+                    avata: foundUser.avata,
+                    tokenKey
+                }
             })
         } else {
             throw "Wrong user or password"

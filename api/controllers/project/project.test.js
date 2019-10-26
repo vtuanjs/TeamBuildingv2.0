@@ -453,15 +453,4 @@ describe('POST /project/:projectId/leave-project', () => {
             done()
         }).catch(error => done(error))
     })
-    it('OK, add member again to project', done => {
-        request(app).post(`/project/${listProjects[0]._id}/add-members`).set({
-            'x-access-token': owner.tokenKey
-        }).send({
-            userIds: member._id
-        }).then(res => {
-            const body = res.body
-            expect(res.statusCode).to.equals(200)
-            done()
-        }).catch((error) => done(error))
-    })
 })

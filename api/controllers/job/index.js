@@ -116,16 +116,17 @@ module.exports.postSubJob = async (req, res, next) => {
     }
 }
 
-const filterJob = (query, filter) => {
-    if (!filter) {
-        return {
-            ...query,
+const filterJobByStatus = (status) => {
+    let filterJob
+
+    if (!status) {
+        filterJob = {
             isCompleted: 0,
             isDeleted: 0
         }
     }
 
-    switch (filter) {
+    switch (status) {
         case 'isCompleted':
             query = {
                 ...query,
@@ -159,10 +160,11 @@ module.exports.getJobs = async (req, res, next) => {
     const { projectId } = req.query
 
     try {
-        const jobs = await Job.find(
-            queryGetJobs(projectId, filter),
-            "title createdAt"
-        )
+        const jobs = await Job.find({
+            parent: projectId,
+            onModel: 'Project',
+
+        }, "title createdAt" )
 
         if (!jobs) throw "Can not show job"
 
