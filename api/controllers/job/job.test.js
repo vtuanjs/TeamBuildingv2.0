@@ -122,8 +122,8 @@ describe('POST /job?projectId=', () => {
     })
 })
 
-describe('GET /job', () => {
-    it('OK, Query list of jobs', done => {
+describe('GET /job?projectId=', () => {
+    it('OK, Query list of jobs by project id', done => {
         request(app).get(`/job?projectId=${projectId}`).set({
             'x-access-token': owner.tokenKey
         }).then(res => {
