@@ -1,7 +1,5 @@
 const jwt = require("jsonwebtoken");
 
-const TOKEN_EXPIRE_STRING = 'Token expire'
-
 /**
  * private function generateToken
  * @param user 
@@ -9,27 +7,19 @@ const TOKEN_EXPIRE_STRING = 'Token expire'
  * @param tokenLife 
  */
 const generateToken = (user, secretString, tokenLife) => {
-    return new Promise((resolve, reject) => {
-        const userData = {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
+    const userData = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+    }
+    return jwt.sign(
+        userData,
+        secretString,
+        {
+            algorithm: "HS256",
+            expiresIn: tokenLife,
         }
-
-        jwt.sign(
-            userData,
-            secretString,
-            {
-                algorithm: "HS256",
-                expiresIn: tokenLife,
-            },
-            (error, tokenKey) => {
-                if (error) {
-                    return reject(error)
-                }
-                resolve(tokenKey)
-            })
-    })
+    )
 }
 /**
  * This module used for verify jwt token
@@ -37,23 +27,10 @@ const generateToken = (user, secretString, tokenLife) => {
  * @param {*} secretString 
  */
 const verifyToken = (tokenKey, secretString) => {
-    return new Promise((resolve, reject) => {
-        jwt.verify(tokenKey, secretString, (error, decoded) => {
-            if (error) {
-                return reject(error);
-            }
-
-            if (Date.now() / 1000 > decoded.exp) {
-                return reject(TOKEN_EXPIRE_STRING)
-            }
-
-            resolve(decoded);
-        })
-    })
+    return jwt.verify(tokenKey, secretString)
 }
 
 module.exports = {
-    TOKEN_EXPIRE_STRING,
     generateToken,
     verifyToken
 }

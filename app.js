@@ -6,7 +6,11 @@ require('dotenv').config()
 const IP_ACCESS = process.env.ACCESS_CONTROL_ORIGIN || '*'
 const cors = require('cors')
 
-app.use(cors({ origin: IP_ACCESS }))
+app.use(cors({ 
+    origin: IP_ACCESS,
+    exposedHeaders: ['x-access-token', 'x-refresh-token']
+}))
+
 app.use(express.static('public'))
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())

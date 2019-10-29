@@ -1,8 +1,10 @@
 const User = require('../user/user.model')
 const bcrypt = require('bcrypt')
 const redis = require('../../middlewares/redis')
-const secretString = process.env.TOKEN_SECRET
-const tokenLife = process.env.TOKEN_LIFE
+const tokenSecret = process.env.TOKEN_SECRET || 'secret3322'
+const tokenLife = process.env.TOKEN_LIFE || 8640
+const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET || 'secret3323332'
+const refreshTokenLife = process.env.REFRESH_TOKEN_LIFE || 86400
 const { generateToken } = require('../../helpers/jwt.helper')
 
 module.exports.login = async (req, res) => {
@@ -26,14 +28,18 @@ module.exports.login = async (req, res) => {
         const checkPassword = await bcrypt.compare(password, encryptedPassword)
 
         if (checkPassword) {
-            const tokenKey = await generateToken(foundUser, secretString, tokenLife)
+            const [tokenKey, refreshTokenKey] = await Promise.all([
+                generateToken(foundUser, tokenSecret, tokenLife),
+                generateToken(foundUser, refreshTokenSecret, refreshTokenLife)
+            ])
 
             return res.json({
                 user: {
                     _id: foundUser._id,
                     name: foundUser.name,
                     avata: foundUser.avata,
-                    tokenKey
+                    tokenKey,
+                    refreshTokenKey
                 }
             })
         } else {
