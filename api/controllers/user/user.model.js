@@ -90,6 +90,13 @@ const UserSchema = new Schema({
             type: Number,
             default: 0
         },
+    }],
+    signedDevice: [{
+        _id: false,
+        ip: String,
+        refreshTokenKey: String,
+        signedAt: { type: Date, default: Date.now() },
+        location: Object
     }]
 }, {
     timestamps: true,

@@ -1,9 +1,11 @@
 const User = require('../controllers/user/user.model')
+const redis = require('./redis')
 const { verifyToken, generateToken } = require('../helpers/jwt.helper')
 const tokenSecret = process.env.TOKEN_SECRET || 'secret3322'
 const tokenLife = process.env.TOKEN_LIFE || 8640
 const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET || 'secret3323332'
-const refreshTokenLife = process.env.REFRESH_TOKEN_LIFE || 86400
+const redisLife = process.env.REDIS_LIFE
+
 
 const findUser = (userId) => {
     return new Promise((resolve, reject) => {
@@ -44,19 +46,23 @@ module.exports.required = async (req, res, next) => {
         const refreshTokenKey = req.headers['x-refresh-token']
         if (refreshTokenKey){
             try {
-                const decodedJson = await verifyToken(refreshTokenKey, refreshTokenSecret)
+                const tokenFromRedis = await redis.get(refreshTokenKey)
 
-                const user = await findUser(decodedJson._id)
+                if (tokenFromRedis === tokenKey){
+                    // Generate new token
+                    const decodedJson = await verifyToken(refreshTokenKey, refreshTokenSecret)
+                    const user = await findUser(decodedJson._id)
+                    const newToken = await generateToken(user, tokenSecret, tokenLife)
 
-                const [newToken, newRefreshToken] = await Promise.all([
-                    generateToken(user, tokenSecret, tokenLife),
-                    generateToken(user, refreshTokenSecret, refreshTokenLife)
-                ])
-                res.set('x-access-token', newToken)
-                res.set('x-refresh-token', newRefreshToken)
+                    res.set('x-access-token', newToken)
 
-                req.user = user
-                return next()
+                    await redis.setex(refreshTokenKey, redisLife, newToken)
+    
+                    req.user = user
+                    return next()
+                } else {
+                    throw 'Refresh Token Expires, Please Login'
+                }
             } catch (err) {
                 return res.status(403).json({
                     message: `Token error: ` + err

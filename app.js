@@ -8,7 +8,7 @@ const cors = require('cors')
 
 app.use(cors({ 
     origin: IP_ACCESS,
-    exposedHeaders: ['x-access-token', 'x-refresh-token']
+    exposedHeaders: ['x-access-token']
 }))
 
 app.use(express.static('public'))
